@@ -11,8 +11,9 @@ namespace RtpMidiSource
 	{
 		static async Task Main(string[] args)
 		{
-			var attributeMapProvider = new AttributeMapProvider();
-			var groupMapProvider = new GroupMapProvider();
+			var optionsProvider = new OptionsProvider();
+			var attributeMapProvider = new AttributeMapProvider(optionsProvider);
+			var groupMapProvider = new GroupMapProvider(optionsProvider);
 			var sessionProvider = new SessionProvider();
 			var connectionProvider = new MqttConnectionProvider();
 			var attributeSetter = new MqttAttributeSetter(connectionProvider);

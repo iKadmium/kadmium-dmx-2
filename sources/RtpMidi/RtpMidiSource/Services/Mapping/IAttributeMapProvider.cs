@@ -7,6 +7,6 @@ namespace RtpMidiSource.Services.Mapping
 {
 	public interface IAttributeMapProvider
 	{
-		Task<Dictionary<int, string>> GetAttributeMapAsync();
+		Task<Dictionary<int, AttributeMapping>> GetAttributeMapAsync();
 	}
 }

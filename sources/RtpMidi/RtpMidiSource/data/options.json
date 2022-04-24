@@ -1,0 +1,20 @@
+{
+	"groupMap": {
+		"1": "vocalist",
+		"2": "guitarist",
+		"3": "bassist"
+	},
+	"attributeMap": {
+		"1": {
+			"name": "Hue",
+			"min": 0,
+			"max": 360
+		},
+		"2": {
+			"name": "Saturation"
+		},
+		"3": {
+			"name": "Brightness"
+		}
+	}
+}

@@ -26,8 +26,6 @@ namespace RtpMidiSource.Services.Mqtt
 			}
 
 			await ConnectionProvider.PublishAsync(topic, payload);
-
-			Console.WriteLine($"Setting {group} {attribute} to {value}");
 		}
 	}
 }

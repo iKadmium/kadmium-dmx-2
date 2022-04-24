@@ -45,7 +45,9 @@ namespace RtpMidiSource
 							var group = groupMap[cc.Channel];
 							var value = cc.Value;
 
-							tasks.Add(AttributeSetter.SetAttributeAsync(group, attribute, value));
+							var adjustedValue = attribute.GetAdjustedValue(cc.Value);
+
+							tasks.Add(AttributeSetter.SetAttributeAsync(group, attribute.Name, adjustedValue));
 						}
 					}
 				}
