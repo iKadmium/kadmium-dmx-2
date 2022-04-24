@@ -1,0 +1,32 @@
+name: Test and Coverage
+
+on:
+  pull_request:
+    branches: [ master ]
+
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - project: RtpMidiSource
+            workdir: sources/RtpMidi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ${{ matrix.workdir }}
+      - name: Build
+        run: dotnet build --no-restore
+        working-directory: ${{ matrix.workdir }}
+      - name: Test
+        run: dotnet test --no-build --verbosity normal --settings coverlet.runsettings
+        working-directory: ${{ matrix.workdir }}
+      - name: Check coverage
+        uses: codecov/codecov-action@v1
