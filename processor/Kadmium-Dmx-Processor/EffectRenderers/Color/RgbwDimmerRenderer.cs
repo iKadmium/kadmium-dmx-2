@@ -11,6 +11,14 @@ namespace Kadmium_Dmx_Processor.EffectRenderers.Color
 {
 	public class RgbwDimmerRenderer : IEffectRenderer
 	{
+		public IEnumerable<string> RenderTargets { get; } = new[] {
+			LightFixtureConstants.Red,
+			LightFixtureConstants.Green,
+			LightFixtureConstants.Blue,
+			LightFixtureConstants.White,
+			LightFixtureConstants.Dimmer
+		};
+
 		public void Render(Dictionary<string, EffectAttribute> pipeline, Dictionary<ushort, DmxChannel> channels)
 		{
 			var hue = pipeline[LightFixtureConstants.Hue].Value;

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Kadmium_Dmx_Processor.EffectRenderers.Color;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
-using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects.Renderers;
 using Kadmium_Dmx_Processor.Models;
 using Kadmium_Dmx_Processor.Utilities;
 

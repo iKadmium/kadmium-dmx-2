@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Kadmium_Dmx_Processor.EffectRenderers;
+using Kadmium_Dmx_Processor.Effects;
 
 namespace Kadmium_Dmx_Processor.Models
 {
@@ -21,11 +23,18 @@ namespace Kadmium_Dmx_Processor.Models
 				MovementAxis.Add(axis.Name, new Axis(axis));
 			}
 			Group = group;
+			Personality = personality;
+			Definition = definition;
 		}
 
 		public ushort Address { get; }
 		public Dictionary<ushort, DmxChannel> Channels { get; } = new Dictionary<ushort, DmxChannel>();
 		public Dictionary<string, Axis> MovementAxis { get; }
 		public string Group { get; }
+		public Dictionary<string, EffectAttribute> Pipeline { get; } = new Dictionary<string, EffectAttribute>();
+		public List<IEffectRenderer> EffectRenderers { get; } = new List<IEffectRenderer>();
+		public List<IEffect> Effects { get; } = new List<IEffect>();
+		public string Personality { get; }
+		public FixtureDefinition Definition { get; }
 	}
 }
