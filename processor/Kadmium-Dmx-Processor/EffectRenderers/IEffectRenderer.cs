@@ -9,7 +9,7 @@ namespace Kadmium_Dmx_Processor.EffectRenderers
 {
 	public interface IEffectRenderer
 	{
-		void Render(Dictionary<string, EffectAttribute> pipeline, Dictionary<ushort, DmxChannel> channels);
-		IEnumerable<string> RenderTargets { get; }
+		void Render(Memory<byte> dmxMemory);
+		IEnumerable<DmxChannel> RenderTargets { get; }
 	}
 }

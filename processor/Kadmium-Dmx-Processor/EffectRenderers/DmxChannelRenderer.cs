@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
 using Kadmium_Dmx_Processor.Models;
@@ -11,22 +12,22 @@ namespace Kadmium_Dmx_Processor.EffectRenderers
 {
 	public class DmxChannelRenderer : IEffectRenderer
 	{
-		public string AttributeName { get; }
-		public ushort ChannelAddress { get; }
-		public IEnumerable<string> RenderTargets { get; }
+		public EffectAttribute Attribute { get; }
+		public IEnumerable<DmxChannel> RenderTargets { get; }
+		private ushort Address { get; }
 
-		public DmxChannelRenderer(string attributeName, ushort channelAddress)
+		public DmxChannelRenderer(FixtureActor actor, DmxChannel channel)
 		{
-			AttributeName = attributeName;
-			ChannelAddress = channelAddress;
-			RenderTargets = new[] { AttributeName };
+			Attribute = actor.AddAttribute(channel.Name);
+			RenderTargets = new[] { channel };
+			Address = (ushort)(channel.Address - 1);
 		}
 
-		public void Render(Dictionary<string, EffectAttribute> pipeline, Dictionary<ushort, DmxChannel> channels)
+		public void Render(Memory<byte> dmxMemory)
 		{
-			var rawValue = pipeline[AttributeName].Value;
+			var rawValue = Attribute.Value;
 			byte result = (byte)Scale.Rescale(rawValue, 0, 1, 0, 255);
-			channels[ChannelAddress].Value = result;
+			dmxMemory.Span[Address] = result;
 		}
 	}
 }

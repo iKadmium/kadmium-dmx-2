@@ -7,7 +7,13 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 {
 	public class MqttEvent
 	{
-		public string? Topic { get; set; }
-		public string? Payload { get; set; }
+		public string Topic { get; set; }
+		public byte[] Payload { get; set; }
+
+		public MqttEvent(string topic, byte[] payload)
+		{
+			Topic = topic;
+			Payload = payload;
+		}
 	}
 }

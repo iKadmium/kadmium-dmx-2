@@ -16,13 +16,17 @@ namespace Kadmium_Dmx_Processor.Test.Effects.FixtureEffects.LightFixtureEffects
 		{
 			var expected = 1.0f;
 			var timeProviderMock = Mock.Of<ITimeProvider>();
-			var pipeline = new Dictionary<string, EffectAttribute>
-			{
-				{FakeStrobe.InputAttributeName, new EffectAttribute { Value = 0.0f }},
-				{LightFixtureConstants.Brightness, new EffectAttribute {Value = expected}}
-			};
+			var fixture = FixtureHelper.GetFixture(
+				LightFixtureConstants.Red,
+				LightFixtureConstants.Green,
+				LightFixtureConstants.Blue
+			);
+			var pipeline = fixture.FramePipeline;
+			var fakeStrobe = new FakeStrobe(timeProviderMock, fixture);
 
-			var fakeStrobe = new FakeStrobe(timeProviderMock);
+			pipeline[LightFixtureConstants.Shutter].Value = 0.0f;
+			pipeline.Add(LightFixtureConstants.Brightness, new EffectAttribute { Value = expected });
+
 			fakeStrobe.Apply(pipeline);
 			var actual = pipeline[LightFixtureConstants.Brightness];
 
@@ -36,13 +40,17 @@ namespace Kadmium_Dmx_Processor.Test.Effects.FixtureEffects.LightFixtureEffects
 			var timeProviderMock = Mock.Of<ITimeProvider>(mock =>
 				mock.TimeSinceLastRender == TimeSpan.FromMilliseconds(0)
 			);
-			var pipeline = new Dictionary<string, EffectAttribute>
-			{
-				{FakeStrobe.InputAttributeName, new EffectAttribute { Value = 1.0f }},
-				{LightFixtureConstants.Brightness, new EffectAttribute {Value = 1.0f}}
-			};
+			var fixture = FixtureHelper.GetFixture(
+				LightFixtureConstants.Red,
+				LightFixtureConstants.Green,
+				LightFixtureConstants.Blue
+			);
+			var pipeline = fixture.FramePipeline;
+			var fakeStrobe = new FakeStrobe(timeProviderMock, fixture);
 
-			var fakeStrobe = new FakeStrobe(timeProviderMock);
+			pipeline[LightFixtureConstants.Shutter].Value = 1.0f;
+			pipeline.Add(LightFixtureConstants.Brightness, new EffectAttribute { Value = 1.0f });
+
 			fakeStrobe.Apply(pipeline);
 			var actual = pipeline[LightFixtureConstants.Brightness];
 
@@ -56,13 +64,17 @@ namespace Kadmium_Dmx_Processor.Test.Effects.FixtureEffects.LightFixtureEffects
 			var timeProviderMock = Mock.Of<ITimeProvider>(mock =>
 				mock.TimeSinceLastRender == TimeSpan.FromMilliseconds(FakeStrobe.FASTEST_CYCLE_TIME_MS + 1)
 			);
-			var pipeline = new Dictionary<string, EffectAttribute>
-			{
-				{FakeStrobe.InputAttributeName, new EffectAttribute { Value = 1.0f }},
-				{LightFixtureConstants.Brightness, new EffectAttribute {Value = 1.0f}}
-			};
+			var fixture = FixtureHelper.GetFixture(
+				LightFixtureConstants.Red,
+				LightFixtureConstants.Green,
+				LightFixtureConstants.Blue
+			);
+			var pipeline = fixture.FramePipeline;
+			var fakeStrobe = new FakeStrobe(timeProviderMock, fixture);
 
-			var fakeStrobe = new FakeStrobe(timeProviderMock);
+			pipeline[LightFixtureConstants.Shutter].Value = 1.0f;
+			pipeline.Add(LightFixtureConstants.Brightness, new EffectAttribute { Value = 1.0f });
+
 			fakeStrobe.Apply(pipeline);
 			var actual = pipeline[LightFixtureConstants.Brightness];
 
@@ -76,13 +88,17 @@ namespace Kadmium_Dmx_Processor.Test.Effects.FixtureEffects.LightFixtureEffects
 			var timeProviderMock = Mock.Of<ITimeProvider>(mock =>
 				mock.TimeSinceLastRender == TimeSpan.FromMilliseconds(FakeStrobe.FASTEST_CYCLE_TIME_MS + 1)
 			);
-			var pipeline = new Dictionary<string, EffectAttribute>
-			{
-				{FakeStrobe.InputAttributeName, new EffectAttribute { Value=1.0f}},
-				{LightFixtureConstants.Brightness, new EffectAttribute {Value = 1.0f}}
-			};
+			var fixture = FixtureHelper.GetFixture(
+				LightFixtureConstants.Red,
+				LightFixtureConstants.Green,
+				LightFixtureConstants.Blue
+			);
+			var pipeline = fixture.FramePipeline;
+			var fakeStrobe = new FakeStrobe(timeProviderMock, fixture);
 
-			var fakeStrobe = new FakeStrobe(timeProviderMock);
+			pipeline[LightFixtureConstants.Shutter].Value = 1.0f;
+			pipeline.Add(LightFixtureConstants.Brightness, new EffectAttribute { Value = 1.0f });
+
 			fakeStrobe.Apply(pipeline);
 			pipeline[LightFixtureConstants.Brightness].Value = 1.0f;
 			fakeStrobe.Apply(pipeline);

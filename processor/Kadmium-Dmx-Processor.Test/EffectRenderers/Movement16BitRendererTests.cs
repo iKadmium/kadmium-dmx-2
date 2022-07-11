@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.EffectRenderers.Movement;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Models;
@@ -17,45 +18,40 @@ namespace Kadmium_Dmx_Processor.Test.EffectRenderers
 		[InlineData((256f / ushort.MaxValue), 1, 0)]
 		public void When_RenderIsCalled_Then_TheOutputIsAsExpected(float value, byte expectedCoarse, byte expectedFine)
 		{
-			var group = "Everyone";
 			var personality = "Standard";
 			var definition = new FixtureDefinition(
 				"Someone",
 				"Something",
-				new Dictionary<string, FixturePersonalityDefinition>
+				new Dictionary<string, Dictionary<ushort, DmxChannel>>
 				{
 					{
 						personality,
-						new FixturePersonalityDefinition(
-							personality,
-							new Dictionary<ushort, DmxChannel>
-							{
-								{ 1, new DmxChannel("TwistCoarse", 1) },
-								{ 2, new DmxChannel("TwistFine", 2) }
-							}
-						)
+						new Dictionary<ushort, DmxChannel>
+						{
+							{ 1, new DmxChannel("TwistCoarse", 1) },
+							{ 2, new DmxChannel("TwistFine", 2) }
+						}
 					}
 				},
 				new Dictionary<string, Axis>
 				{
-					{ "Twist", new Axis("Twist", -180, 180) }
+					{ "Twist", new Axis(-180, 180) }
 				}
 			);
 
-			var fixture = new Fixture(1, definition, personality, group);
-			var renderer = new Movement16BitRenderer("Twist");
+			var fixtureInstance = new FixtureInstance(1, "Someone", "Something", personality);
+			var actor = new FixtureActor(fixtureInstance, definition);
 
-			var pipeline = new Dictionary<string, EffectAttribute>
-			{
-				{"Twist", new EffectAttribute() }
-			};
+			var renderer = new Movement16BitRenderer(actor, definition.MovementAxis["Twist"], "Twist");
 
-			pipeline["Twist"].Value = value;
+			actor.FramePipeline["Twist"].Value = value;
 
-			renderer.Render(pipeline, fixture.Channels);
+			var memory = new Memory<byte>(new byte[Universe.MAX_SIZE]);
 
-			Assert.Equal(expectedCoarse, fixture.Channels[1].Value);
-			Assert.Equal(expectedFine, fixture.Channels[2].Value);
+			renderer.Render(memory);
+
+			Assert.Equal(memory.Span[1], expectedCoarse);
+			Assert.Equal(memory.Span[2], expectedFine);
 		}
 	}
 }

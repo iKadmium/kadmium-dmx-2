@@ -9,63 +9,27 @@ using Kadmium_Dmx_Processor.Services.Venues;
 
 namespace Kadmium_Dmx_Processor.Services.Renderer
 {
-	public class DmxRenderer : IDmxRenderer, IDisposable
+	public class DmxRenderer : IDmxRenderer
 	{
-		private IMemoryOwner<byte>? DmxMemory;
 		private IVenueProvider VenueProvider { get; }
 		private IGroupProvider GroupProvider { get; }
-		private Venue? Venue { get; set; }
-		private Dictionary<string, Group>? Groups { get; set; }
+		private IDmxRenderTarget RenderTarget { get; }
 
-		public DmxRenderer(IVenueProvider venueProvider, IGroupProvider groupProvider)
+		public DmxRenderer(IVenueProvider venueProvider, IGroupProvider groupProvider, IDmxRenderTarget renderTarget)
 		{
 			VenueProvider = venueProvider;
 			GroupProvider = groupProvider;
+			RenderTarget = renderTarget;
 		}
 
-		public async Task Load()
+		public async Task Render()
 		{
-			DmxMemory?.Dispose();
-			Venue = await VenueProvider.GetVenueAsync();
-			var memorySize = Venue.Universes.Count * Universe.MAX_SIZE;
-			DmxMemory = MemoryPool<byte>.Shared.Rent(memorySize);
-			Groups = await GroupProvider.GetGroups();
-			foreach (var currentGroup in Groups.Values)
+			foreach (var group in GroupProvider.Groups.Values)
 			{
-				var fixturesInGroup = from universe in Venue.Universes.Values
-									  from fixture in universe.Fixtures.Values
-									  where fixture.Group == currentGroup.Name
-									  select fixture;
-				foreach (var fixture in fixturesInGroup)
-				{
-					currentGroup.Fixtures.Add(fixture);
-				}
+				group.Render();
 			}
-		}
-
-		public void Render()
-		{
-			if (Venue == null || DmxMemory == null)
-			{
-				throw new InvalidOperationException("No venue has been loaded");
-			}
-
-			foreach (var universe in Venue.Universes.Values)
-			{
-				foreach (var fixture in universe.Fixtures.Values)
-				{
-					foreach (var channel in fixture.Channels.Values)
-					{
-						var address = fixture.Address + channel.Address - 1;
-						DmxMemory.Memory.Span[address] = channel.Value;
-					}
-				}
-			}
-		}
-
-		public void Dispose()
-		{
-			DmxMemory?.Dispose();
+			var promises = VenueProvider.UniverseActors.Values.Select(x => x.Render(RenderTarget));
+			await Task.WhenAll(promises);
 		}
 	}
 }

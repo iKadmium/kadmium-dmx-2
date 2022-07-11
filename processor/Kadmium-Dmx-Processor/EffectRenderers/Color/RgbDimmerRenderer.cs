@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.EffectRenderers;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
@@ -10,28 +11,28 @@ using Kadmium_Dmx_Processor.Utilities;
 
 namespace Kadmium_Dmx_Processor.EffectRenderers.Color
 {
-	public class RgbDimmerRenderer : IEffectRenderer
+	public class RgbDimmerRenderer : ColorRenderer, IEffectRenderer
 	{
-		public IEnumerable<string> RenderTargets { get; } = new[] {
-			LightFixtureConstants.Red,
-			LightFixtureConstants.Green,
-			LightFixtureConstants.Blue,
-			LightFixtureConstants.Dimmer
-		};
+		private ushort DimmerAddress { get; }
 
-		public void Render(Dictionary<string, EffectAttribute> pipeline, Dictionary<ushort, DmxChannel> channels)
+		public RgbDimmerRenderer(FixtureActor actor) : base(actor)
 		{
-			var hue = pipeline[LightFixtureConstants.Hue].Value;
-			var saturation = pipeline[LightFixtureConstants.Saturation].Value;
-			var brightness = pipeline[LightFixtureConstants.Brightness].Value;
+			DimmerAddress = AddRenderTarget(LightFixtureConstants.Dimmer, actor);
+		}
+
+		public void Render(Memory<byte> dmxMemory)
+		{
+			var hue = Hue.Value;
+			var saturation = Saturation.Value;
+			var brightness = Brightness.Value;
 
 			Hsv.HsvToRgb(hue, saturation, 1, out byte red, out byte green, out byte blue);
-			channels.Single(x => x.Value.Name == LightFixtureConstants.Red).Value.Value = red;
-			channels.Single(x => x.Value.Name == LightFixtureConstants.Green).Value.Value = green;
-			channels.Single(x => x.Value.Name == LightFixtureConstants.Blue).Value.Value = blue;
+			dmxMemory.Span[RedAddress] = red;
+			dmxMemory.Span[GreenAddress] = green;
+			dmxMemory.Span[BlueAddress] = blue;
 
 			var dimmer = (byte)Scale.Rescale(brightness, 0, 1, 0, 255);
-			channels.Single(x => x.Value.Name == LightFixtureConstants.Dimmer).Value.Value = dimmer;
+			dmxMemory.Span[DimmerAddress] = dimmer;
 		}
 	}
 }

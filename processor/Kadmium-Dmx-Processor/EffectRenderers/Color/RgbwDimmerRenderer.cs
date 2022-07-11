@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
 using Kadmium_Dmx_Processor.Models;
@@ -9,31 +10,33 @@ using Kadmium_Dmx_Processor.Utilities;
 
 namespace Kadmium_Dmx_Processor.EffectRenderers.Color
 {
-	public class RgbwDimmerRenderer : IEffectRenderer
+	public class RgbwDimmerRenderer : ColorRenderer, IEffectRenderer
 	{
-		public IEnumerable<string> RenderTargets { get; } = new[] {
-			LightFixtureConstants.Red,
-			LightFixtureConstants.Green,
-			LightFixtureConstants.Blue,
-			LightFixtureConstants.White,
-			LightFixtureConstants.Dimmer
-		};
+		private ushort WhiteAddress { get; }
+		private ushort DimmerAddress { get; }
 
-		public void Render(Dictionary<string, EffectAttribute> pipeline, Dictionary<ushort, DmxChannel> channels)
+		public RgbwDimmerRenderer(FixtureActor actor) : base(actor)
 		{
-			var hue = pipeline[LightFixtureConstants.Hue].Value;
-			var saturation = pipeline[LightFixtureConstants.Saturation].Value;
-			var brightness = pipeline[LightFixtureConstants.Brightness].Value;
+			WhiteAddress = AddRenderTarget(LightFixtureConstants.White, actor);
+			DimmerAddress = AddRenderTarget(LightFixtureConstants.Dimmer, actor);
+		}
+
+		public void Render(Memory<byte> dmxMemory)
+		{
+			var hue = Hue.Value;
+			var saturation = Saturation.Value;
+			var brightness = Brightness.Value;
 
 			Hsv.HsvToRgb(hue, 1, saturation, out byte red, out byte green, out byte blue);
-			channels.Single(x => x.Value.Name == LightFixtureConstants.Red).Value.Value = red;
-			channels.Single(x => x.Value.Name == LightFixtureConstants.Green).Value.Value = green;
-			channels.Single(x => x.Value.Name == LightFixtureConstants.Blue).Value.Value = blue;
+			dmxMemory.Span[RedAddress] = red;
+			dmxMemory.Span[GreenAddress] = green;
+			dmxMemory.Span[BlueAddress] = blue;
+
 			var white = (byte)Scale.Rescale(1 - saturation, 0, 1, 0, 255);
-			channels.Single(x => x.Value.Name == LightFixtureConstants.White).Value.Value = white;
+			dmxMemory.Span[WhiteAddress] = white;
 
 			var dimmer = (byte)Scale.Rescale(brightness, 0, 1, 0, 255);
-			channels.Single(x => x.Value.Name == LightFixtureConstants.Dimmer).Value.Value = dimmer;
+			dmxMemory.Span[DimmerAddress] = dimmer;
 		}
 	}
 }

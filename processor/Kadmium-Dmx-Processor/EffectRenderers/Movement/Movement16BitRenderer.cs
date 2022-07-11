@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Models;
 using Kadmium_Dmx_Processor.Utilities;
@@ -10,24 +11,38 @@ namespace Kadmium_Dmx_Processor.EffectRenderers.Movement
 {
 	public class Movement16BitRenderer : IEffectRenderer
 	{
-		public IEnumerable<string> RenderTargets { get; }
-		public string AxisName { get; }
+		public IEnumerable<DmxChannel> RenderTargets { get; }
+		public EffectAttribute AxisAttribute { get; }
+		private ushort CoarseAddress { get; }
+		private ushort FineAddress { get; }
 
-		public Movement16BitRenderer(string axisName)
+		public Movement16BitRenderer(FixtureActor actor, Axis axis, string name)
 		{
-			RenderTargets = new[] { $"{axisName}Fine", $"{axisName}Coarse" };
-			AxisName = axisName;
+			var coarse = actor.Channels.Values.Single(x => x.Name == $"{name}Coarse");
+			var fine = actor.Channels.Values.Single(x => x.Name == $"{name}Fine");
+			RenderTargets = new[] { coarse, fine };
+
+			AxisAttribute = actor.AddAttribute(name);
+
+			CoarseAddress = (ushort)(actor.FixtureInstance.Address + coarse.Address - 1);
+			FineAddress = (ushort)(actor.FixtureInstance.Address + fine.Address - 1);
 		}
 
-		public void Render(Dictionary<string, EffectAttribute> pipeline, Dictionary<ushort, DmxChannel> channels)
+		public void Render(Memory<byte> dmxMemory)
 		{
-			var rawValue = pipeline[AxisName].Value;
+			var rawValue = AxisAttribute.Value;
 			var shortVal = (ushort)Scale.Rescale(rawValue, 0, 1, ushort.MinValue, ushort.MaxValue);
 			var bytes = BitConverter.GetBytes(shortVal);
-			var coarse = channels.Values.Single(x => x.Name == $"{AxisName}Coarse");
-			var fine = channels.Values.Single(x => x.Name == $"{AxisName}Fine");
-			coarse.Value = bytes[1];
-			fine.Value = bytes[0];
+			if (BitConverter.IsLittleEndian)
+			{
+				dmxMemory.Span[CoarseAddress] = bytes[1];
+				dmxMemory.Span[FineAddress] = bytes[0];
+			}
+			else
+			{
+				dmxMemory.Span[CoarseAddress] = bytes[0];
+				dmxMemory.Span[FineAddress] = bytes[1];
+			}
 		}
 	}
 }

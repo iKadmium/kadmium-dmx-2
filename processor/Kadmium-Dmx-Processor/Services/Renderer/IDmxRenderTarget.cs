@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace Kadmium_Dmx_Processor.Services.Renderer
 {
-	public interface IDmxRenderer
+	public interface IDmxRenderTarget
 	{
-		Task Render();
+		Task Send(ushort universe, Memory<byte> memory);
 	}
 }

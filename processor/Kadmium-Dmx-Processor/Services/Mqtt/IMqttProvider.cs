@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace Kadmium_Dmx_Processor.Services.Mqtt
 {
-	public interface IMqttReceiver
+	public interface IMqttProvider
 	{
 		event EventHandler<MqttEvent> MqttEventReceived;
+		Task Send(string topic, Memory<byte> packet);
 		Task Connect();
-
 	}
 }
