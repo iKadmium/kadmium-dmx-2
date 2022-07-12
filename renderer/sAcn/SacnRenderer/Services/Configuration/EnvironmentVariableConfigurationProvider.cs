@@ -15,5 +15,7 @@ namespace SacnRenderer.Services.Configuration
 		public IEnumerable<IPAddress> UnicastTargets { get; } = (Environment.GetEnvironmentVariable("UNICAST_TARGETS") ?? "")
 			.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
 			.Select(x => IPAddress.Parse(x));
+
+		public string MqttServer { get; } = Environment.GetEnvironmentVariable("MQTT_HOST") ?? "mqtt";
 	}
 }

@@ -17,16 +17,20 @@ namespace SacnRenderer
 				.ConfigureAppConfiguration((configure) => { })
 				.ConfigureServices((hostContext, services) =>
 				{
-					services.AddSingleton<MqttClientOptions>((serviceProvider) => new MqttClientOptionsBuilder()
-						.WithTcpServer("mqtt")
+					services.AddSingleton<IConfigurationProvider, EnvironmentVariableConfigurationProvider>();
+
+					services.AddSingleton<MqttClientOptions>((serviceProvider) =>
+					{
+						var config = serviceProvider.GetRequiredService<IConfigurationProvider>();
+						return new MqttClientOptionsBuilder()
+						.WithTcpServer(config.MqttServer)
 						.WithProtocolVersion(MqttProtocolVersion.V500)
-						.Build()
-					);
+						.Build();
+					});
 
 					services.AddSingleton<IMqttClient>((serviceProvider) => new MqttFactory().CreateMqttClient());
 					services.AddSingleton<IMqttProvider, MqttProvider>();
 					services.AddSingleton<ISacnRenderer, SacnRenderer.Services.Sacn.SacnRenderer>();
-					services.AddSingleton<IConfigurationProvider, EnvironmentVariableConfigurationProvider>();
 				});
 
 			var host = builder.Build();

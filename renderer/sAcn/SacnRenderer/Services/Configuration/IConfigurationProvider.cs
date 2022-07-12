@@ -8,8 +8,9 @@ namespace SacnRenderer.Services.Configuration
 {
 	public interface IConfigurationProvider
 	{
-		public bool Ipv6Multicast { get; }
-		public bool Ipv4Multicast { get; }
-		public IEnumerable<IPAddress> UnicastTargets { get; }
+		bool Ipv6Multicast { get; }
+		bool Ipv4Multicast { get; }
+		IEnumerable<IPAddress> UnicastTargets { get; }
+		string MqttServer { get; }
 	}
 }
