@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SacnRenderer", "SacnRenderer\SacnRenderer.csproj", "{1D6F262F-9C71-42CB-B8BA-192E0B8E03AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SacnRenderer.Test", "SacnRenderer.Test\SacnRenderer.Test.csproj", "{1D7BF823-FF9C-4377-A14A-49C61BBF8A2C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1D6F262F-9C71-42CB-B8BA-192E0B8E03AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D6F262F-9C71-42CB-B8BA-192E0B8E03AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D6F262F-9C71-42CB-B8BA-192E0B8E03AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D6F262F-9C71-42CB-B8BA-192E0B8E03AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D7BF823-FF9C-4377-A14A-49C61BBF8A2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D7BF823-FF9C-4377-A14A-49C61BBF8A2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D7BF823-FF9C-4377-A14A-49C61BBF8A2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D7BF823-FF9C-4377-A14A-49C61BBF8A2C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -8,6 +8,7 @@ using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.Models;
 using Kadmium_Dmx_Processor.Services.EffectProvider;
 using Kadmium_Dmx_Processor.Services.Groups;
+using Kadmium_Dmx_Processor.Services.Mqtt;
 
 namespace Kadmium_Dmx_Processor.Services.Venues
 {
@@ -17,28 +18,30 @@ namespace Kadmium_Dmx_Processor.Services.Venues
 		private IGroupProvider GroupProvider { get; }
 		public Venue Venue { get; private set; } = new Venue("Empty Venue", new Dictionary<ushort, Universe>());
 		public Dictionary<ushort, UniverseActor> UniverseActors { get; }
+		private IMqttProvider MqttProvider { get; }
 		private JsonSerializerOptions JsonSerializerOptions { get; } = new JsonSerializerOptions
 		{
 			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
 		};
 
-		public VenueProvider(IEffectProvider effectProvider, IGroupProvider groupProvider)
+		public VenueProvider(IEffectProvider effectProvider, IGroupProvider groupProvider, IMqttProvider mqttProvider)
 		{
 			EffectProvider = effectProvider;
 			GroupProvider = groupProvider;
 			UniverseActors = new Dictionary<ushort, UniverseActor>();
+			MqttProvider = mqttProvider;
 		}
 
-		public void LoadVenue(JsonDocument document)
+		public async void LoadVenue(JsonDocument document)
 		{
 			foreach (var universe in UniverseActors.Values)
 			{
 				universe.Dispose();
 			}
 			UniverseActors.Clear();
-
 			GroupProvider.Clear();
-			//var fixtureDefinitions = document.RootElement.GetProperty("fixtureDefinitions");
+			await MqttProvider.UnsubscribeAll();
+
 			var venueElement = document.RootElement.GetProperty("venue");
 			var fixtureDefinitionsElement = document.RootElement.GetProperty("fixtureDefinitions");
 			var fixtureDefinitions = JsonSerializer.Deserialize<List<FixtureDefinition>>(fixtureDefinitionsElement, JsonSerializerOptions) ?? new List<FixtureDefinition>();
@@ -55,24 +58,50 @@ namespace Kadmium_Dmx_Processor.Services.Venues
 						x.Manufacturer == fixtureInstance.Value.Manufacturer
 						&& x.Model == fixtureInstance.Value.Model);
 					var fixtureActor = new FixtureActor(fixtureInstance.Value, definition);
-					fixtureActor.Effects.AddRange(EffectProvider.GetEffects(fixtureActor));
 					fixtureActor.EffectRenderers.AddRange(EffectProvider.GetEffectRenderers(fixtureActor));
+					fixtureActor.Effects.AddRange(EffectProvider.GetEffects(fixtureActor));
 					universeActor.FixtureActors.Add(fixtureInstance.Key, fixtureActor);
 				}
 			}
 
-			// foreach (var currentGroup in GroupProvider.Groups.Values)
-			// {
-			// 	var fixturesInGroup = from universe in Venue.Universes.Values
-			// 						  from fixture in universe.Fixtures.Values
-			// 						  where fixture.Group == currentGroup.Name
-			// 						  select fixture;
+			var groupElement = document.RootElement.GetProperty("groups");
+			var universeMappings = JsonSerializer.Deserialize<Dictionary<ushort, Dictionary<ushort, string>>>(groupElement, JsonSerializerOptions) ?? new Dictionary<ushort, Dictionary<ushort, string>>();
 
-			// 	foreach (var fixture in fixturesInGroup)
-			// 	{
-			// 		currentGroup.Fixtures.Add(new FixtureActor(fixture));
-			// 	}
-			// }
+			foreach (var universeMapping in universeMappings)
+			{
+				var universe = UniverseActors[universeMapping.Key];
+				foreach (var fixtureMapping in universeMapping.Value)
+				{
+					var fixture = universe.FixtureActors[fixtureMapping.Key];
+					var groupName = fixtureMapping.Value;
+					GroupProvider.Groups[groupName].Fixtures.Add(fixture);
+				}
+			}
+
+
+			foreach (var group in GroupProvider.Groups.Values)
+			{
+				EffectProvider.GetEffects(group);
+			}
+			var groupTopics = from groupKvp in GroupProvider.Groups
+							  from attributeName in groupKvp.Value.EffectAttributes.Keys
+							  select $"/group/{groupKvp.Key}/{attributeName}";
+
+			var groupFixtureTopics = from groupKvp in GroupProvider.Groups
+									 from universeKvp in UniverseActors
+									 from fixtureKvp in universeKvp.Value.FixtureActors
+									 from effectAttribute in fixtureKvp.Value.EffectAttributes
+									 select $"/group/{groupKvp.Key}/{effectAttribute.Key}";
+
+			var fixtureTopics = from universeKvp in UniverseActors
+								from fixtureKvp in universeKvp.Value.FixtureActors
+								from effectAttribute in fixtureKvp.Value.EffectAttributes
+								select $"/fixture/{universeKvp.Key}/{fixtureKvp.Key}/{effectAttribute.Key}";
+
+			var topicPromises = groupTopics
+				.Union(groupFixtureTopics)
+				.Union(fixtureTopics);
+			await MqttProvider.Subscribe(topicPromises);
 		}
 	}
 }

@@ -26,9 +26,17 @@ namespace Kadmium_Dmx_Processor.Services.Renderer
 		{
 			foreach (var group in GroupProvider.Groups.Values)
 			{
-				group.Render();
+				group.Clear();
+				group.Draw();
 			}
-			var promises = VenueProvider.UniverseActors.Values.Select(x => x.Render(RenderTarget));
+
+			var promises = VenueProvider.UniverseActors.Select(x =>
+			{
+				x.Value.Clear();
+				x.Value.Draw();
+				return x.Value.Render(RenderTarget, x.Key);
+			});
+
 			await Task.WhenAll(promises);
 		}
 	}

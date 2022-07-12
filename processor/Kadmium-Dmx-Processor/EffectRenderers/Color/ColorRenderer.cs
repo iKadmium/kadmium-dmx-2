@@ -35,7 +35,7 @@ namespace Kadmium_Dmx_Processor.EffectRenderers.Color
 		{
 			var channel = actor.Channels.Values.Single(x => x.Name == name);
 			RenderTargetList.Add(channel);
-			return (ushort)(channel.Address + actor.FixtureInstance.Address - 1);
+			return (ushort)(actor.Channels.Single(x => x.Value == channel).Key + actor.FixtureInstance.Address - 1);
 		}
 	}
 }

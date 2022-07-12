@@ -24,8 +24,8 @@ namespace Kadmium_Dmx_Processor.EffectRenderers.Movement
 
 			AxisAttribute = actor.AddAttribute(name);
 
-			CoarseAddress = (ushort)(actor.FixtureInstance.Address + coarse.Address - 1);
-			FineAddress = (ushort)(actor.FixtureInstance.Address + fine.Address - 1);
+			CoarseAddress = (ushort)(actor.FixtureInstance.Address + actor.Channels.Single(x => x.Value == coarse).Key - 1);
+			FineAddress = (ushort)(actor.FixtureInstance.Address + actor.Channels.Single(x => x.Value == fine).Key - 1);
 		}
 
 		public void Render(Memory<byte> dmxMemory)

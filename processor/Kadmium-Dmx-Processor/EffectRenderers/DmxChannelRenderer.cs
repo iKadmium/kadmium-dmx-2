@@ -20,7 +20,7 @@ namespace Kadmium_Dmx_Processor.EffectRenderers
 		{
 			Attribute = actor.AddAttribute(channel.Name);
 			RenderTargets = new[] { channel };
-			Address = (ushort)(channel.Address - 1);
+			Address = (ushort)(actor.Channels.Single(x => x.Value == channel).Key + actor.FixtureInstance.Address - 1);
 		}
 
 		public void Render(Memory<byte> dmxMemory)

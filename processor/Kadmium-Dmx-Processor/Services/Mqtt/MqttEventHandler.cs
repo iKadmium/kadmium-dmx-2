@@ -50,9 +50,9 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 			{
 				var group = GroupProvider.Groups[groupName];
 				var attributeName = topicParts[2];
-				if (group.Pipeline.ContainsKey(attributeName))
+				if (group.EffectAttributes.ContainsKey(attributeName))
 				{
-					group.Pipeline[attributeName].Value = value;
+					group.EffectAttributes[attributeName].Value = value;
 				}
 				else
 				{

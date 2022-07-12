@@ -9,6 +9,9 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 	{
 		event EventHandler<MqttEvent> MqttEventReceived;
 		Task Send(string topic, Memory<byte> packet);
+		Task Subscribe(params string[] topics);
+		Task Subscribe(IEnumerable<string> topics);
+		Task UnsubscribeAll();
 		Task Connect();
 	}
 }

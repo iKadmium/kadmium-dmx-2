@@ -20,6 +20,7 @@ namespace Kadmium_Dmx_Processor.Actors
 		{
 			DmxMemoryOwner = MemoryPool<byte>.Shared.Rent(Universe.MAX_SIZE);
 			DmxMemory = DmxMemoryOwner.Memory.Slice(0, Universe.MAX_SIZE);
+			DmxMemory.Span.Fill(0);
 			Universe = universe;
 		}
 
@@ -28,14 +29,30 @@ namespace Kadmium_Dmx_Processor.Actors
 			DmxMemoryOwner.Dispose();
 		}
 
-		public async Task Render(IDmxRenderTarget renderTarget)
+		public void Clear()
+		{
+			foreach (var fixture in FixtureActors.Values)
+			{
+				fixture.Clear();
+			}
+		}
+
+		public void Draw()
+		{
+			foreach (var fixture in FixtureActors.Values)
+			{
+				fixture.Draw();
+			}
+		}
+
+		public async Task Render(IDmxRenderTarget renderTarget, ushort universeId)
 		{
 			foreach (var fixture in FixtureActors.Values)
 			{
 				fixture.Render(DmxMemory);
 			}
 
-			await renderTarget.Send(Universe.UniverseId, DmxMemory);
+			await renderTarget.Send(universeId, DmxMemory);
 		}
 	}
 }

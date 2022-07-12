@@ -16,6 +16,8 @@ namespace Kadmium_Dmx_Processor.Services.Groups
 			foreach (var group in Groups.Values)
 			{
 				group.Fixtures.Clear();
+				group.EffectAttributes.Clear();
+				group.Effects.Clear();
 			}
 		}
 

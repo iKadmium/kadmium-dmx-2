@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.Services.Mqtt;
 using Kadmium_Dmx_Processor.Services.Renderer;
 using MQTTnet.Client;
-using MQTTnet.Client.Options;
 
 namespace Kadmium_Dmx_Processor.Services.Renderer
 {

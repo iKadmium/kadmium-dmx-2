@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using MQTTnet;
 using MQTTnet.Client;
-using MQTTnet.Client.Options;
 using MQTTnet.Formatter;
 
 namespace Kadmium_Dmx_Processor.Services.Mqtt
@@ -13,9 +12,10 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 	{
 		public event EventHandler<MqttEvent>? MqttEventReceived;
 		private IMqttClient Client { get; }
-		private IMqttClientOptions ClientOptions { get; }
+		private MqttClientOptions ClientOptions { get; }
+		private List<string> Subscriptions { get; } = new List<string>();
 
-		public MqttProvider(IMqttClient client, IMqttClientOptions options)
+		public MqttProvider(IMqttClient client, MqttClientOptions options)
 		{
 			Client = client;
 			ClientOptions = options;
@@ -24,9 +24,7 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 		public async Task Connect()
 		{
 			await Client.ConnectAsync(ClientOptions);
-			await Client.SubscribeAsync("/group/#");
-			await Client.SubscribeAsync("/fixture/#");
-			Client.UseApplicationMessageReceivedHandler(async (mqttEvent) =>
+			Client.ApplicationMessageReceivedAsync += async (mqttEvent) =>
 			{
 				var topic = mqttEvent.ApplicationMessage.Topic;
 				var payload = mqttEvent.ApplicationMessage.Payload;
@@ -34,7 +32,7 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 				var receiverEvent = new MqttEvent(topic, payload);
 				MqttEventReceived?.Invoke(this, receiverEvent);
 				await mqttEvent.AcknowledgeAsync(CancellationToken.None);
-			});
+			};
 		}
 
 		public async Task Send(string topic, Memory<byte> packet)
@@ -45,6 +43,25 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 				Payload = packet.ToArray()
 			};
 			await Client.PublishAsync(message);
+		}
+
+		public Task Subscribe(params string[] topics)
+		{
+			return Subscribe(topics);
+		}
+
+		public Task UnsubscribeAll()
+		{
+			var tasks = Subscriptions.Select(x => Client.SubscribeAsync(x));
+			Subscriptions.Clear();
+			return Task.WhenAll(tasks);
+		}
+
+		public Task Subscribe(IEnumerable<string> topics)
+		{
+			Subscriptions.AddRange(topics);
+			var tasks = topics.Select(x => Client.SubscribeAsync(x));
+			return Task.WhenAll(tasks);
 		}
 	}
 }

@@ -12,6 +12,7 @@ namespace Kadmium_Dmx_Processor.Services.EffectProvider
 	public interface IEffectProvider
 	{
 		IEnumerable<IEffect> GetEffects(FixtureActor actor);
+		IEnumerable<IEffect> GetEffects(Group group);
 		IEnumerable<IEffectRenderer> GetEffectRenderers(FixtureActor actor);
 	}
 }

@@ -12,13 +12,11 @@ namespace Kadmium_Dmx_Processor.Models
 		public static int MAX_SIZE = 512;
 		public string Name { get; }
 		public Dictionary<ushort, FixtureInstance> Fixtures { get; }
-		public ushort UniverseId { get; }
 
-		public Universe(ushort universeId, string name, Dictionary<ushort, FixtureInstance> fixtures)
+		public Universe(string name, Dictionary<ushort, FixtureInstance> fixtures)
 		{
 			Name = name;
 			Fixtures = fixtures;
-			UniverseId = universeId;
 		}
 	}
 }

@@ -16,5 +16,8 @@ namespace Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects
 		public const string White = nameof(White);
 		public const string Dimmer = nameof(Dimmer);
 		public const string Shutter = nameof(Shutter);
+		public const string Apeshit = nameof(Apeshit);
+		public const string ApeshitActive = nameof(ApeshitActive);
+		public const string ApeshitBlackout = nameof(ApeshitBlackout);
 	}
 }

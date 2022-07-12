@@ -28,8 +28,8 @@ namespace Kadmium_Dmx_Processor.Test.EffectRenderers
 						personality,
 						new Dictionary<ushort, DmxChannel>
 						{
-							{ 1, new DmxChannel("TwistCoarse", 1) },
-							{ 2, new DmxChannel("TwistFine", 2) }
+							{ 1, new DmxChannel("TwistCoarse") },
+							{ 2, new DmxChannel("TwistFine") }
 						}
 					}
 				},

@@ -8,25 +8,23 @@ namespace Kadmium_Dmx_Processor.Models
 {
 	public class DmxChannel
 	{
-		public DmxChannel(string name, ushort address, byte min, byte max) : this(name, address)
+		public DmxChannel(string name, byte min, byte max) : this(name)
 		{
 			Min = min;
 			Max = max;
 		}
 
 		[JsonConstructor]
-		public DmxChannel(string name, ushort address)
+		public DmxChannel(string name)
 		{
 			Name = name;
-			Address = address;
 		}
 
-		public DmxChannel(DmxChannel channel) : this(channel.Name, channel.Address)
+		public DmxChannel(DmxChannel channel) : this(channel.Name, channel.Min, channel.Max)
 		{
 		}
 
 		public string Name { get; }
-		public ushort Address { get; }
 		public byte Min { get; } = 0;
 		public byte Max { get; } = 255;
 	}

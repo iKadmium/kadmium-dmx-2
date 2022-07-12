@@ -9,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MQTTnet;
 using MQTTnet.Client;
-using MQTTnet.Client.Options;
 using MQTTnet.Formatter;
 
 namespace Kadmium_Dmx_Processor
@@ -22,7 +21,7 @@ namespace Kadmium_Dmx_Processor
 				.ConfigureAppConfiguration((configure) => { })
 				.ConfigureServices((hostContext, services) =>
 				{
-					services.AddSingleton<IMqttClientOptions>((serviceProvider) => new MqttClientOptionsBuilder()
+					services.AddSingleton<MqttClientOptions>((serviceProvider) => new MqttClientOptionsBuilder()
 						.WithTcpServer("mqtt")
 						.WithProtocolVersion(MqttProtocolVersion.V500)
 						.Build()
@@ -43,23 +42,22 @@ namespace Kadmium_Dmx_Processor
 			var groupProvider = host.Services.GetRequiredService<IGroupProvider>();
 			await groupProvider.LoadGroups();
 
-			var venueProvider = host.Services.GetRequiredService<IVenueProvider>();
+			var messageHandler = host.Services.GetRequiredService<IMqttEventHandler>();
+			var receiver = host.Services.GetRequiredService<IMqttProvider>();
+			receiver.MqttEventReceived += (sender, mqttEvent) => messageHandler.Handle(mqttEvent);
+			await receiver.Connect();
 
+			var venueProvider = host.Services.GetRequiredService<IVenueProvider>();
 			var venueText = await File.ReadAllTextAsync("data/testVenue.json");
 			var venueDoc = JsonDocument.Parse(venueText);
 			venueProvider.LoadVenue(venueDoc);
 
+			var timeProvider = host.Services.GetRequiredService<ITimeProvider>();
 			var renderer = host.Services.GetRequiredService<IDmxRenderer>();
-
-			var messageHandler = host.Services.GetRequiredService<IMqttEventHandler>();
-
-			var receiver = host.Services.GetRequiredService<IMqttProvider>();
-			receiver.MqttEventReceived += (sender, mqttEvent) => messageHandler.Handle(mqttEvent);
-
-			await receiver.Connect();
 			var renderTimer = new Timer(async (state) =>
 			{
 				await renderer.Render();
+				timeProvider.OnRender();
 			}, null, 0, 22);
 
 			await host.RunAsync();

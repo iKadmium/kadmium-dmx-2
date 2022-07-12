@@ -8,6 +8,7 @@ using Kadmium_Dmx_Processor.EffectRenderers.Color;
 using Kadmium_Dmx_Processor.EffectRenderers.Movement;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
+using Kadmium_Dmx_Processor.Effects.GroupEffects;
 using Kadmium_Dmx_Processor.Models;
 using Kadmium_Dmx_Processor.Services.TimeProvider;
 using Kadmium_Dmx_Processor.Utilities;
@@ -80,7 +81,15 @@ namespace Kadmium_Dmx_Processor.Services.EffectProvider
 			{
 				renderers.Add(new FakeStrobe(TimeProvider, actor));
 			}
+			renderers.Add(new ApeshitClient(actor));
 
+			return renderers;
+		}
+
+		public IEnumerable<IEffect> GetEffects(Group group)
+		{
+			var renderers = new List<IEffect>();
+			renderers.Add(new Apeshit(TimeProvider, group));
 			return renderers;
 		}
 	}

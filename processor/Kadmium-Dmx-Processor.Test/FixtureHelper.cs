@@ -15,7 +15,7 @@ namespace Kadmium_Dmx_Processor.Test
 				.Range(1, channelNames.Length)
 				.ToDictionary(
 					(x) => (ushort)x,
-					(x) => new DmxChannel(channelNames[x - 1], (ushort)x)
+					(x) => new DmxChannel(channelNames[x - 1])
 				);
 
 			var definition = new FixtureDefinition(
