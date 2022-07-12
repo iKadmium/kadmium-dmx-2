@@ -9,7 +9,7 @@ RUN dotnet restore
 
 # Copy everything else and build
 COPY ./RtpMidiSource/ ./RtpMidiSource/
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -c Release -o dist
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
@@ -22,5 +22,5 @@ EXPOSE 5351/udp
 EXPOSE 5353/udp
 
 WORKDIR /app
-COPY --from=build-env /app/out .
+COPY --from=build-env /app/dist .
 ENTRYPOINT ["dotnet", "RtpMidiSource.dll"]

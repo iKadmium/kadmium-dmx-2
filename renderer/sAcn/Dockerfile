@@ -11,7 +11,7 @@ RUN dotnet restore
 # Copy everything else and build
 COPY ./SacnRenderer/ ./SacnRenderer/
 COPY ./SacnRenderer.Test/ ./SacnRenderer.Test/
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -c Release -o dist
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0

@@ -11,7 +11,7 @@ RUN dotnet restore
 # Copy everything else and build
 COPY ./Kadmium-Dmx-Processor/ ./Kadmium-Dmx-Processor/
 COPY ./Kadmium-Dmx-Processor.Test/ ./Kadmium-Dmx-Processor.Test/
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -c Release -o dist
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
