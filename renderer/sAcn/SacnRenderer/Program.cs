@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Formatter;
+using SacnRenderer.Services.Configuration;
 using SacnRenderer.Services.Mqtt;
 using SacnRenderer.Services.Sacn;
 
@@ -25,6 +26,7 @@ namespace SacnRenderer
 					services.AddSingleton<IMqttClient>((serviceProvider) => new MqttFactory().CreateMqttClient());
 					services.AddSingleton<IMqttProvider, MqttProvider>();
 					services.AddSingleton<ISacnRenderer, SacnRenderer.Services.Sacn.SacnRenderer>();
+					services.AddSingleton<IConfigurationProvider, EnvironmentVariableConfigurationProvider>();
 				});
 
 			var host = builder.Build();
