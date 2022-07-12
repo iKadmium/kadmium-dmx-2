@@ -100,8 +100,6 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 					VenueProvider.LoadVenue(document);
 					break;
 			}
-
-
 		}
 	}
 }

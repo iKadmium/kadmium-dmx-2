@@ -22,7 +22,7 @@ namespace Kadmium_Dmx_Processor.Test.Effects.FixtureEffects.MovementFixtureEffec
 			var axis = new Axis(oldMinDegrees, oldMaxDegrees);
 			var fixture = FixtureHelper.GetFixture(axisName);
 			var attribute = fixture.AddAttribute(axisName);
-			var effect = new AxisConstrainer(axis, newMinDegrees, newMaxDegrees, axisName, fixture);
+			var effect = new AxisConstrainer(axisName, newMinDegrees, newMaxDegrees, fixture);
 			attribute.Value = value;
 
 			effect.Apply(fixture.FramePipeline);

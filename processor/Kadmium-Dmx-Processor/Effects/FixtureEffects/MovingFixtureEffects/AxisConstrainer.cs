@@ -14,8 +14,9 @@ namespace Kadmium_Dmx_Processor.Effects.FixtureEffects.MovingFixtureEffects
 		public float MinValue { get; }
 		public float MaxValue { get; }
 
-		public AxisConstrainer(Axis axis, float minDegrees, float maxDegrees, string name, FixtureActor actor)
+		public AxisConstrainer(string name, float minDegrees, float maxDegrees, FixtureActor actor)
 		{
+			var axis = actor.Definition.MovementAxis[name];
 			MinValue = Scale.Rescale(minDegrees, axis.MinAngle, axis.MaxAngle, 0, 1);
 			MaxValue = Scale.Rescale(maxDegrees, axis.MinAngle, axis.MaxAngle, 0, 1);
 			Attribute = actor.FramePipeline[name];

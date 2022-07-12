@@ -61,28 +61,18 @@ namespace Kadmium_Dmx_Processor.Services.Venues
 					fixtureActor.EffectRenderers.AddRange(EffectProvider.GetEffectRenderers(fixtureActor));
 					fixtureActor.Effects.AddRange(EffectProvider.GetEffects(fixtureActor));
 					universeActor.FixtureActors.Add(fixtureInstance.Key, fixtureActor);
+					foreach (var groupName in fixtureInstance.Value.Groups)
+					{
+						GroupProvider.Groups[groupName].Fixtures.Add(fixtureActor);
+					}
 				}
 			}
-
-			var groupElement = document.RootElement.GetProperty("groups");
-			var universeMappings = JsonSerializer.Deserialize<Dictionary<ushort, Dictionary<ushort, string>>>(groupElement, JsonSerializerOptions) ?? new Dictionary<ushort, Dictionary<ushort, string>>();
-
-			foreach (var universeMapping in universeMappings)
-			{
-				var universe = UniverseActors[universeMapping.Key];
-				foreach (var fixtureMapping in universeMapping.Value)
-				{
-					var fixture = universe.FixtureActors[fixtureMapping.Key];
-					var groupName = fixtureMapping.Value;
-					GroupProvider.Groups[groupName].Fixtures.Add(fixture);
-				}
-			}
-
 
 			foreach (var group in GroupProvider.Groups.Values)
 			{
 				EffectProvider.GetEffects(group);
 			}
+
 			var groupTopics = from groupKvp in GroupProvider.Groups
 							  from attributeName in groupKvp.Value.EffectAttributes.Keys
 							  select $"/group/{groupKvp.Key}/{attributeName}";

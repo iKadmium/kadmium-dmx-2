@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.EffectRenderers;
@@ -8,6 +9,7 @@ using Kadmium_Dmx_Processor.EffectRenderers.Color;
 using Kadmium_Dmx_Processor.EffectRenderers.Movement;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
+using Kadmium_Dmx_Processor.Effects.FixtureEffects.MovingFixtureEffects;
 using Kadmium_Dmx_Processor.Effects.GroupEffects;
 using Kadmium_Dmx_Processor.Models;
 using Kadmium_Dmx_Processor.Services.TimeProvider;
@@ -18,6 +20,10 @@ namespace Kadmium_Dmx_Processor.Services.EffectProvider
 	public class EffectProvider : IEffectProvider
 	{
 		private ITimeProvider TimeProvider { get; }
+		private JsonSerializerOptions JsonSerializerOptions { get; } = new JsonSerializerOptions
+		{
+			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+		};
 
 		public EffectProvider(ITimeProvider timeProvider)
 		{
@@ -76,14 +82,22 @@ namespace Kadmium_Dmx_Processor.Services.EffectProvider
 
 		public IEnumerable<IEffect> GetEffects(FixtureActor actor)
 		{
-			var renderers = new List<IEffect>();
+			var effects = new List<IEffect>();
 			if (!actor.Definition.Personalities[actor.FixtureInstance.Personality].Values.Any(x => x.Name == LightFixtureConstants.Shutter))
 			{
-				renderers.Add(new FakeStrobe(TimeProvider, actor));
+				effects.Add(new FakeStrobe(TimeProvider, actor));
 			}
-			renderers.Add(new ApeshitClient(actor));
+			effects.Add(new ApeshitClient(actor));
+			if (actor.FixtureInstance.Options.ContainsKey(nameof(AxisConstrainer)))
+			{
+				var options = JsonSerializer.Deserialize<Dictionary<string, AxisConstrainerOptions>>(actor.FixtureInstance.Options[nameof(AxisConstrainer)], JsonSerializerOptions) ?? new Dictionary<string, AxisConstrainerOptions>();
+				foreach (var option in options)
+				{
+					effects.Add(new AxisConstrainer(option.Key, option.Value.Min, option.Value.Max, actor));
+				}
+			}
 
-			return renderers;
+			return effects;
 		}
 
 		public IEnumerable<IEffect> GetEffects(Group group)

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Kadmium_Dmx_Processor.Services.Configuration;
 using Kadmium_Dmx_Processor.Services.EffectProvider;
 using Kadmium_Dmx_Processor.Services.Groups;
 using Kadmium_Dmx_Processor.Services.Mqtt;
@@ -21,11 +22,15 @@ namespace Kadmium_Dmx_Processor
 				.ConfigureAppConfiguration((configure) => { })
 				.ConfigureServices((hostContext, services) =>
 				{
-					services.AddSingleton<MqttClientOptions>((serviceProvider) => new MqttClientOptionsBuilder()
-						.WithTcpServer("mqtt")
-						.WithProtocolVersion(MqttProtocolVersion.V500)
-						.Build()
-					);
+					services.AddSingleton<IConfigurationProvider, EnvironmentVariableConfigurationProvider>();
+					services.AddSingleton<MqttClientOptions>((serviceProvider) =>
+					{
+						var configProvider = serviceProvider.GetRequiredService<IConfigurationProvider>();
+						return new MqttClientOptionsBuilder()
+							.WithTcpServer(configProvider.MqttHost)
+							.WithProtocolVersion(MqttProtocolVersion.V500)
+							.Build();
+					});
 					services.AddSingleton<IMqttClient>((serviceProvider) => new MqttFactory().CreateMqttClient());
 					services.AddSingleton<IMqttProvider, MqttProvider>();
 					services.AddSingleton<IDmxRenderer, DmxRenderer>();
@@ -38,6 +43,8 @@ namespace Kadmium_Dmx_Processor
 				});
 
 			var host = builder.Build();
+
+			var configProvider = host.Services.GetRequiredService<IConfigurationProvider>();
 
 			var groupProvider = host.Services.GetRequiredService<IGroupProvider>();
 			await groupProvider.LoadGroups();
@@ -58,7 +65,7 @@ namespace Kadmium_Dmx_Processor
 			{
 				await renderer.Render();
 				timeProvider.OnRender();
-			}, null, 0, 22);
+			}, null, 0, (1000 / configProvider.RefreshRate));
 
 			await host.RunAsync();
 		}
