@@ -4,11 +4,13 @@ WORKDIR /app
 
 COPY *.sln ./
 COPY ./SacnRenderer/*.csproj ./SacnRenderer/
+COPY ./SacnRenderer.Test/*.csproj ./SacnRenderer.Test/
 
 RUN dotnet restore
 
 # Copy everything else and build
 COPY ./SacnRenderer/ ./SacnRenderer/
+COPY ./SacnRenderer.Test/ ./SacnRenderer.Test/
 RUN dotnet publish -c Release -o out
 
 # Build runtime image

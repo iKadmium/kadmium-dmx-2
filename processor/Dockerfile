@@ -4,11 +4,13 @@ WORKDIR /app
 
 COPY *.sln ./
 COPY ./Kadmium-Dmx-Processor/*.csproj ./Kadmium-Dmx-Processor/
+COPY ./Kadmium-Dmx-Processor.Test/*.csproj ./Kadmium-Dmx-Processor.Test/
 
 RUN dotnet restore
 
 # Copy everything else and build
 COPY ./Kadmium-Dmx-Processor/ ./Kadmium-Dmx-Processor/
+COPY ./Kadmium-Dmx-Processor.Test/ ./Kadmium-Dmx-Processor.Test/
 RUN dotnet publish -c Release -o out
 
 # Build runtime image
