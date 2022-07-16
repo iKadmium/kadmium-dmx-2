@@ -9,18 +9,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  publish-nuget-package:
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Pack
-        working-directory: shared
-        run: dotnet pack
-      - name: Push
-        working-directory: shared
-        run: |
-          dotnet nuget add source --username iKadmium --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/iKadmium/index.json"
-          dotnet nuget push "bin/Release/OctocatApp.1.0.0.nupkg" --username iKadmium --password ${{ secrets.GITHUB_TOKEN }} --source "github"
   publish-docker-images:
     strategy:
       matrix:
@@ -34,6 +22,9 @@ jobs:
           - project: Processor
             workdir: processor
             image-name: processor
+          - project: WebAPI
+            workdir: webapi
+            image-name: webapi
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -58,7 +49,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
-          context: ./${{ matrix.workdir }}
+          file: ${{ matrix.workdir }}/Dockerfile
+          context: ./
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

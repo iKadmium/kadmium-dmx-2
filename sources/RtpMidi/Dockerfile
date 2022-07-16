@@ -2,13 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /app
 
-COPY *.sln ./
-COPY ./RtpMidiSource/*.csproj ./RtpMidiSource/
+COPY ./sources/RtpMidi/ *.sln ./
+COPY ./sources/RtpMidi/RtpMidiSource/*.csproj ./RtpMidiSource/
 
 RUN dotnet restore
 
 # Copy everything else and build
-COPY ./RtpMidiSource/ ./RtpMidiSource/
+COPY ./sources/RtpMidi/RtpMidiSource/ ./RtpMidiSource/
 RUN dotnet publish -c Release -o dist
 
 # Build runtime image

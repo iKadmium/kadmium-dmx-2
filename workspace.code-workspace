@@ -1,19 +1,28 @@
 {
 	"folders": [
 		{
-			"path": "processor"
+			"path": "processor",
+			"name": "Processor"
 		},
 		{
-			"path": "renderer/sAcn"
+			"path": "renderer/sAcn",
+			"name": "sAcn Renderer"
 		},
 		{
-			"path": "shared"
+			"path": "shared",
+			"name": "Shared"
 		},
 		{
-			"path": "webapi"
+			"path": "webapi",
+			"name": "Web API"
 		},
 		{
-			"path": "sources/RtpMidi"
+			"path": "sources/RtpMidi",
+			"name": "Rtp Midi Source"
+		},
+		{
+			"path": ".github/workflows",
+			"name": "CI/CD Workflows"
 		}
 	],
 	"settings": {}

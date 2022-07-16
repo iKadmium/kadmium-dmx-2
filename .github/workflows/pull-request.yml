@@ -16,6 +16,8 @@ jobs:
             workdir: renderer/sAcn
           - project: Processor
             workdir: processor
+          - project: WebAPI
+            workdir: webapi
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

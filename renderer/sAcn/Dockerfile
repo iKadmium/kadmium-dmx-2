@@ -2,15 +2,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /app
 
-COPY *.sln ./
-COPY ./SacnRenderer/*.csproj ./SacnRenderer/
-COPY ./SacnRenderer.Test/*.csproj ./SacnRenderer.Test/
+COPY ./renderer/sAcn/*.sln ./
+COPY ./renderer/sAcn/SacnRenderer/*.csproj ./SacnRenderer/
+COPY ./renderer/sAcn/SacnRenderer.Test/*.csproj ./SacnRenderer.Test/
 
 RUN dotnet restore
 
 # Copy everything else and build
-COPY ./SacnRenderer/ ./SacnRenderer/
-COPY ./SacnRenderer.Test/ ./SacnRenderer.Test/
+COPY ./renderer/sAcn/SacnRenderer/ ./SacnRenderer/
+COPY ./renderer/sAcn/SacnRenderer.Test/ ./SacnRenderer.Test/
 RUN dotnet publish -c Release -o dist
 
 # Build runtime image
