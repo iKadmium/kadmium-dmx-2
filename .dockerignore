@@ -3,3 +3,4 @@
 **/dist/
 **/.devcontainer/
 **/.vscode/
+**/node-modules/

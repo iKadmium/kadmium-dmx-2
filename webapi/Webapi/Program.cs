@@ -42,8 +42,15 @@ namespace Kadmium_Dmx_Shared
 
 			app.UseHttpsRedirection();
 
-			app.UseAuthorization();
+			app.UseCors(policy =>
+			{
+				policy.AllowAnyHeader();
+				policy.AllowAnyMethod();
+				policy.AllowAnyOrigin();
+				policy.AllowCredentials();
+			});
 
+			app.UseAuthorization();
 			app.MapControllers();
 
 			await app.RunAsync();
