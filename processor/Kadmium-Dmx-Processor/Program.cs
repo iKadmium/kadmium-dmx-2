@@ -46,9 +46,6 @@ namespace Kadmium_Dmx_Processor
 
 			var configProvider = host.Services.GetRequiredService<IConfigurationProvider>();
 
-			var groupProvider = host.Services.GetRequiredService<IGroupProvider>();
-			await groupProvider.LoadGroups();
-
 			var messageHandler = host.Services.GetRequiredService<IMqttEventHandler>();
 			var receiver = host.Services.GetRequiredService<IMqttProvider>();
 			receiver.MqttEventReceived += (sender, mqttEvent) => messageHandler.Handle(mqttEvent);

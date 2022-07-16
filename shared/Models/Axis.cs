@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Kadmium_Dmx_Processor.Models
+namespace Kadmium_Dmx_Shared.Models
 {
 	public class Axis
 	{
@@ -19,7 +19,7 @@ namespace Kadmium_Dmx_Processor.Models
 		{
 		}
 
-		public float MinAngle { get; }
-		public float MaxAngle { get; }
+		public float MinAngle { get; set; }
+		public float MaxAngle { get; set; }
 	}
 }

@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.Actors;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 using Kadmium_Dmx_Processor.Services.EffectProvider;
 using Kadmium_Dmx_Processor.Services.Groups;
 using Kadmium_Dmx_Processor.Services.Mqtt;
@@ -16,7 +16,7 @@ namespace Kadmium_Dmx_Processor.Services.Venues
 	{
 		private IEffectProvider EffectProvider { get; }
 		private IGroupProvider GroupProvider { get; }
-		public Venue Venue { get; private set; } = new Venue("Empty Venue", new Dictionary<ushort, Universe>());
+		public Venue Venue { get; private set; } = new Venue("Empty Venue", "No City", new Dictionary<ushort, Universe>());
 		public Dictionary<ushort, UniverseActor> UniverseActors { get; }
 		private IMqttProvider MqttProvider { get; }
 		private JsonSerializerOptions JsonSerializerOptions { get; } = new JsonSerializerOptions
@@ -39,13 +39,20 @@ namespace Kadmium_Dmx_Processor.Services.Venues
 				universe.Dispose();
 			}
 			UniverseActors.Clear();
-			GroupProvider.Clear();
+			GroupProvider.Groups.Clear();
 			await MqttProvider.UnsubscribeAll();
 
-			var venueElement = document.RootElement.GetProperty("venue");
-			var fixtureDefinitionsElement = document.RootElement.GetProperty("fixtureDefinitions");
-			var fixtureDefinitions = JsonSerializer.Deserialize<List<FixtureDefinition>>(fixtureDefinitionsElement, JsonSerializerOptions) ?? new List<FixtureDefinition>();
-			Venue = JsonSerializer.Deserialize<Venue>(venueElement, JsonSerializerOptions) ?? Venue;
+			var venuePayload = JsonSerializer.Deserialize<VenuePayload>(document, JsonSerializerOptions);
+			if (venuePayload == null)
+			{
+				throw new ArgumentException("The given Json document was not valud");
+			}
+
+			Venue = venuePayload.Venue;
+			foreach (var groupName in venuePayload.Groups)
+			{
+				GroupProvider.Groups.Add(groupName, new Group());
+			}
 
 			foreach (var universe in Venue.Universes)
 			{
@@ -54,16 +61,17 @@ namespace Kadmium_Dmx_Processor.Services.Venues
 
 				foreach (var fixtureInstance in universe.Value.Fixtures)
 				{
-					var definition = fixtureDefinitions.Single(x =>
+					var definition = venuePayload.FixtureDefinitions.Single(x =>
 						x.Manufacturer == fixtureInstance.Value.Manufacturer
 						&& x.Model == fixtureInstance.Value.Model);
 					var fixtureActor = new FixtureActor(fixtureInstance.Value, definition);
-					fixtureActor.EffectRenderers.AddRange(EffectProvider.GetEffectRenderers(fixtureActor));
+					fixtureActor.EffectRenderers.AddRange(EffectProvider.GetEffectRenderers(fixtureActor, fixtureInstance.Key));
 					fixtureActor.Effects.AddRange(EffectProvider.GetEffects(fixtureActor));
 					universeActor.FixtureActors.Add(fixtureInstance.Key, fixtureActor);
 					foreach (var groupName in fixtureInstance.Value.Groups)
 					{
-						GroupProvider.Groups[groupName].Fixtures.Add(fixtureActor);
+						var locator = new FixtureLocator(universe.Key, fixtureInstance.Key);
+						GroupProvider.Groups[groupName].Fixtures.Add(locator, fixtureActor);
 					}
 				}
 			}
@@ -74,18 +82,21 @@ namespace Kadmium_Dmx_Processor.Services.Venues
 			}
 
 			var groupTopics = from groupKvp in GroupProvider.Groups
-							  from attributeName in groupKvp.Value.EffectAttributes.Keys
-							  select $"/group/{groupKvp.Key}/{attributeName}";
+							  from effectAttribute in groupKvp.Value.EffectAttributes
+							  where !effectAttribute.Value.InternalOnly
+							  select $"/group/{groupKvp.Key}/{effectAttribute.Key}";
 
 			var groupFixtureTopics = from groupKvp in GroupProvider.Groups
 									 from universeKvp in UniverseActors
 									 from fixtureKvp in universeKvp.Value.FixtureActors
 									 from effectAttribute in fixtureKvp.Value.EffectAttributes
+									 where !effectAttribute.Value.InternalOnly
 									 select $"/group/{groupKvp.Key}/{effectAttribute.Key}";
 
 			var fixtureTopics = from universeKvp in UniverseActors
 								from fixtureKvp in universeKvp.Value.FixtureActors
 								from effectAttribute in fixtureKvp.Value.EffectAttributes
+								where !effectAttribute.Value.InternalOnly
 								select $"/fixture/{universeKvp.Key}/{fixtureKvp.Key}/{effectAttribute.Key}";
 
 			var topicPromises = groupTopics

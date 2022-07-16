@@ -6,14 +6,14 @@ using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.EffectRenderers;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 using Kadmium_Dmx_Processor.Utilities;
 
 namespace Kadmium_Dmx_Processor.EffectRenderers.Color
 {
 	public class RgbRenderer : ColorRenderer, IEffectRenderer
 	{
-		public RgbRenderer(FixtureActor actor) : base(actor) { }
+		public RgbRenderer(FixtureActor actor, ushort fixtureAddress) : base(actor, fixtureAddress) { }
 
 		public void Render(Memory<byte> dmxMemory)
 		{

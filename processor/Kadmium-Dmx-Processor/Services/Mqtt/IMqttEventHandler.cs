@@ -7,6 +7,6 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 {
 	public interface IMqttEventHandler
 	{
-		void Handle(MqttEvent mqttEvent);
+		Task Handle(MqttEvent mqttEvent);
 	}
 }

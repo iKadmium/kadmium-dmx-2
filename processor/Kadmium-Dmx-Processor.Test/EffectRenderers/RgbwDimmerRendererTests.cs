@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.EffectRenderers.Color;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 
 namespace Kadmium_Dmx_Processor.Test.EffectRenderers
 {
@@ -33,7 +33,7 @@ namespace Kadmium_Dmx_Processor.Test.EffectRenderers
 			);
 
 			var memory = new Memory<byte>(new byte[Universe.MAX_SIZE]);
-			var renderer = new RgbwDimmerRenderer(fixture);
+			var renderer = new RgbwDimmerRenderer(fixture, 1);
 
 			fixture.FramePipeline[LightFixtureConstants.Hue].Value = hue;
 			fixture.FramePipeline[LightFixtureConstants.Saturation].Value = saturation;

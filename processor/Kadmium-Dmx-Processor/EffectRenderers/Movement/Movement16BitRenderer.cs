@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.Effects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 using Kadmium_Dmx_Processor.Utilities;
 
 namespace Kadmium_Dmx_Processor.EffectRenderers.Movement
@@ -16,7 +16,7 @@ namespace Kadmium_Dmx_Processor.EffectRenderers.Movement
 		private ushort CoarseAddress { get; }
 		private ushort FineAddress { get; }
 
-		public Movement16BitRenderer(FixtureActor actor, Axis axis, string name)
+		public Movement16BitRenderer(FixtureActor actor, Axis axis, string name, ushort fixtureAddress)
 		{
 			var coarse = actor.Channels.Values.Single(x => x.Name == $"{name}Coarse");
 			var fine = actor.Channels.Values.Single(x => x.Name == $"{name}Fine");
@@ -24,8 +24,8 @@ namespace Kadmium_Dmx_Processor.EffectRenderers.Movement
 
 			AxisAttribute = actor.AddAttribute(name);
 
-			CoarseAddress = (ushort)(actor.FixtureInstance.Address + actor.Channels.Single(x => x.Value == coarse).Key - 1);
-			FineAddress = (ushort)(actor.FixtureInstance.Address + actor.Channels.Single(x => x.Value == fine).Key - 1);
+			CoarseAddress = (ushort)(fixtureAddress + actor.Channels.Single(x => x.Value == coarse).Key - 1);
+			FineAddress = (ushort)(fixtureAddress + actor.Channels.Single(x => x.Value == fine).Key - 1);
 		}
 
 		public void Render(Memory<byte> dmxMemory)

@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "processor"
+		},
+		{
+			"path": "renderer/sAcn"
+		},
+		{
+			"path": "shared"
+		},
+		{
+			"path": "webapi"
+		},
+		{
+			"path": "sources/RtpMidi"
+		}
+	],
+	"settings": {}
+}

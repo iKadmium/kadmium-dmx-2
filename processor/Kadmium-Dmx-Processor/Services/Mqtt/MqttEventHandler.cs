@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 using Kadmium_Dmx_Processor.Services.Groups;
 using Kadmium_Dmx_Processor.Services.Venues;
 
@@ -15,21 +15,23 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 	{
 		private IGroupProvider GroupProvider { get; }
 		private IVenueProvider VenueProvider { get; }
+		private IMqttProvider MqttProvider { get; }
 
-		public MqttEventHandler(IGroupProvider groupProvider, IVenueProvider venueProvider)
+		public MqttEventHandler(IGroupProvider groupProvider, IVenueProvider venueProvider, IMqttProvider mqttProvider)
 		{
 			GroupProvider = groupProvider;
 			VenueProvider = venueProvider;
+			MqttProvider = mqttProvider;
 		}
 
-		public void Handle(MqttEvent mqttEvent)
+		public async Task Handle(MqttEvent mqttEvent)
 		{
 			var topicParts = mqttEvent.Topic.Split("/", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
 			switch (topicParts[0])
 			{
 				case "group":
-					HandleGroupEvent(topicParts, mqttEvent.Payload);
+					await HandleGroupEvent(topicParts, mqttEvent.Payload);
 					break;
 				case "fixture":
 					HandleFixtureEvent(topicParts, mqttEvent.Payload);
@@ -40,7 +42,7 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 			}
 		}
 
-		private void HandleGroupEvent(string[] topicParts, byte[] payload)
+		private async Task HandleGroupEvent(string[] topicParts, byte[] payload)
 		{
 			var parsed = System.Text.Encoding.ASCII.GetString(payload[2..]);
 			var value = Single.Parse(parsed);
@@ -56,7 +58,12 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 				}
 				else
 				{
-					HandleFixtureSet(group.Fixtures, topicParts.Last(), value);
+					var messages = group.Fixtures.Keys.Select(async (x) =>
+					{
+						var topic = $"/fixture/{x.UniverseId}/{x.Address}/{attributeName}";
+						await MqttProvider.Send(topic, payload);
+					});
+					await Task.WhenAll(messages);
 				}
 			}
 		}

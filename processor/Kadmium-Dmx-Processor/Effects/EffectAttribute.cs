@@ -8,5 +8,6 @@ namespace Kadmium_Dmx_Processor.Effects
 	public class EffectAttribute
 	{
 		public float Value { get; set; }
+		public bool InternalOnly { get; set; } = false;
 	}
 }

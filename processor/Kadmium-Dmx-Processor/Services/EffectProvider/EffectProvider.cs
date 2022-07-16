@@ -11,7 +11,7 @@ using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.MovingFixtureEffects;
 using Kadmium_Dmx_Processor.Effects.GroupEffects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 using Kadmium_Dmx_Processor.Services.TimeProvider;
 using Kadmium_Dmx_Processor.Utilities;
 
@@ -30,16 +30,16 @@ namespace Kadmium_Dmx_Processor.Services.EffectProvider
 			TimeProvider = timeProvider;
 		}
 
-		public IEnumerable<IEffectRenderer> GetEffectRenderers(FixtureActor actor)
+		public IEnumerable<IEffectRenderer> GetEffectRenderers(FixtureActor actor, ushort fixtureAddress)
 		{
 			var renderers = new List<IEffectRenderer>();
-			renderers.Add(GetColorRenderer(actor));
+			renderers.Add(GetColorRenderer(actor, fixtureAddress));
 
 			foreach (var axis in actor.Definition.MovementAxis)
 			{
 				if (actor.Channels.Values.Select(x => x.Name).ContainsAll($"{axis.Key}Coarse", $"{axis.Key}Fine"))
 				{
-					renderers.Add(new Movement16BitRenderer(actor, axis.Value, axis.Key));
+					renderers.Add(new Movement16BitRenderer(actor, axis.Value, axis.Key, fixtureAddress));
 				}
 			}
 
@@ -48,31 +48,31 @@ namespace Kadmium_Dmx_Processor.Services.EffectProvider
 			var remainingChannels = actor.Channels.Values.Where(x => !occupiedChannels.Select(x => x.Name).Contains(x.Name));
 			foreach (var remainingChannel in remainingChannels)
 			{
-				renderers.Add(new DmxChannelRenderer(actor, remainingChannel));
+				renderers.Add(new DmxChannelRenderer(actor, remainingChannel, fixtureAddress));
 			}
 
 			return renderers;
 		}
 
-		private IEffectRenderer GetColorRenderer(FixtureActor actor)
+		private IEffectRenderer GetColorRenderer(FixtureActor actor, ushort fixtureAddress)
 		{
 			var definition = actor.Definition.Personalities[actor.FixtureInstance.Personality];
 			var channelNames = definition.Values.Select(x => x.Name);
 			if (channelNames.ContainsAll(LightFixtureConstants.Red, LightFixtureConstants.Green, LightFixtureConstants.Blue, LightFixtureConstants.White, LightFixtureConstants.Dimmer))
 			{
-				return new RgbwDimmerRenderer(actor);
+				return new RgbwDimmerRenderer(actor, fixtureAddress);
 			}
 			if (channelNames.ContainsAll(LightFixtureConstants.Red, LightFixtureConstants.Green, LightFixtureConstants.Blue, LightFixtureConstants.Dimmer))
 			{
-				return new RgbDimmerRenderer(actor);
+				return new RgbDimmerRenderer(actor, fixtureAddress);
 			}
 			if (channelNames.ContainsAll(LightFixtureConstants.Red, LightFixtureConstants.Green, LightFixtureConstants.Blue, LightFixtureConstants.White))
 			{
-				return new RgbwRenderer(actor);
+				return new RgbwRenderer(actor, fixtureAddress);
 			}
 			if (channelNames.ContainsAll(LightFixtureConstants.Red, LightFixtureConstants.Green, LightFixtureConstants.Blue))
 			{
-				return new RgbRenderer(actor);
+				return new RgbRenderer(actor, fixtureAddress);
 			}
 			else
 			{
@@ -88,9 +88,10 @@ namespace Kadmium_Dmx_Processor.Services.EffectProvider
 				effects.Add(new FakeStrobe(TimeProvider, actor));
 			}
 			effects.Add(new ApeshitClient(actor));
+			effects.Add(new RandomMove(TimeProvider, actor));
 			if (actor.FixtureInstance.Options.ContainsKey(nameof(AxisConstrainer)))
 			{
-				var options = JsonSerializer.Deserialize<Dictionary<string, AxisConstrainerOptions>>(actor.FixtureInstance.Options[nameof(AxisConstrainer)], JsonSerializerOptions) ?? new Dictionary<string, AxisConstrainerOptions>();
+				var options = JsonSerializer.Deserialize<Dictionary<string, AxisConstrainerOptions>>((JsonElement)actor.FixtureInstance.Options[nameof(AxisConstrainer)], JsonSerializerOptions) ?? new Dictionary<string, AxisConstrainerOptions>();
 				foreach (var option in options)
 				{
 					effects.Add(new AxisConstrainer(option.Key, option.Value.Min, option.Value.Max, actor));

@@ -1,31 +1,50 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.224.3/containers/dotnet
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/dotnet
 {
 	"name": "C# (.NET)",
-	"runArgs": ["--init", "-p", "1900:1900/udp", "-p", "5023:5023/udp", "-p", "5024:5024/udp", "-p", "5350:5350/udp", "-p", "5351:5351/udp", "-p", "5353:5353/udp", "--network", "kadmium-dmx-2"],
 	"build": {
 		"dockerfile": "Dockerfile",
-		"args": { 
+		"args": {
 			// Update 'VARIANT' to pick a .NET Core version: 3.1, 5.0, 6.0
 			// Append -bullseye or -focal to pin to an OS version.
-			"VARIANT": "6.0",
+			"VARIANT": "6.0-bullseye",
 			// Options
 			"NODE_VERSION": "none"
 		}
 	},
-
-	// Set *default* container specific settings.json values on container create.
-	"settings": {},
-
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"ms-dotnettools.csharp",
-		"kreativ-software.csharpextensions"
+	"runArgs": [
+		"--init",
+		"-p",
+		"1900:1900/udp",
+		"-p",
+		"5023:5023/udp",
+		"-p",
+		"5024:5024/udp",
+		"-p",
+		"5350:5350/udp",
+		"-p",
+		"5351:5351/udp",
+		"-p",
+		"5353:5353/udp",
+		"--network",
+		"kadmium-dmx-2"
 	],
-
+	// Set *default* container specific settings.json values on container create.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"ms-dotnettools.csharp",
+				"kreativ-software.csharpextensions",
+				"hbenl.vscode-test-explorer",
+				"ms-vscode.test-adapter-converter",
+				"formulahendry.dotnet-test-explorer"
+			]
+		}
+	},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [5000, 5001],
-
 	// [Optional] To reuse of your local HTTPS dev cert:
 	//
 	// 1. Export it locally using this command:
@@ -48,10 +67,8 @@
 	//
 	//    * If only using Remote - Containers with a local container, uncomment this line instead:
 	//      "mounts": [ "source=${env:HOME}${env:USERPROFILE}/.aspnet/https,target=/home/vscode/.aspnet/https,type=bind" ],
-
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "dotnet restore",
-
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode"
 }

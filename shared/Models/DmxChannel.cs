@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Kadmium_Dmx_Processor.Models
+namespace Kadmium_Dmx_Shared.Models
 {
 	public class DmxChannel
 	{
@@ -24,8 +24,8 @@ namespace Kadmium_Dmx_Processor.Models
 		{
 		}
 
-		public string Name { get; }
-		public byte Min { get; } = 0;
-		public byte Max { get; } = 255;
+		public string Name { get; set; }
+		public byte Min { get; set; } = 0;
+		public byte Max { get; set; } = 255;
 	}
 }

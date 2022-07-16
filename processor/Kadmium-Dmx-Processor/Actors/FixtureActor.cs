@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.EffectRenderers;
 using Kadmium_Dmx_Processor.Effects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 
 namespace Kadmium_Dmx_Processor.Actors
 {
@@ -49,10 +49,10 @@ namespace Kadmium_Dmx_Processor.Actors
 			}
 		}
 
-		public EffectAttribute AddAttribute(string name)
+		public EffectAttribute AddAttribute(string name, bool internalOnly = false)
 		{
-			var framePipelineAttribute = new EffectAttribute();
-			var attribute = new EffectAttribute();
+			var framePipelineAttribute = new EffectAttribute { InternalOnly = internalOnly };
+			var attribute = new EffectAttribute { InternalOnly = internalOnly };
 			FramePipeline.Add(name, framePipelineAttribute);
 			EffectAttributes.Add(name, attribute);
 			return framePipelineAttribute;

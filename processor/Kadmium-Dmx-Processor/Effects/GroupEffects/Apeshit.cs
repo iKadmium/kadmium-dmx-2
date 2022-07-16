@@ -38,7 +38,7 @@ namespace Kadmium_Dmx_Processor.Effects.GroupEffects
 			{
 				if (LastValue != 0f)
 				{
-					foreach (var fixture in Group.Fixtures)
+					foreach (var fixture in Group.Fixtures.Values)
 					{
 						fixture.FramePipeline[LightFixtureConstants.ApeshitActive].Value = 0f;
 						fixture.FramePipeline[LightFixtureConstants.ApeshitBlackout].Value = 0f;
@@ -52,8 +52,8 @@ namespace Kadmium_Dmx_Processor.Effects.GroupEffects
 			this.TimeSinceLastChange += TimeProvider.TimeSinceLastRender;
 			if (this.TimeSinceLastChange.TotalMilliseconds > cycleTime)
 			{
-				var onFixtures = Group.Fixtures.TakeRandom(Group.Fixtures.Count / 3);
-				var offFixtures = Group.Fixtures.Except(onFixtures);
+				var onFixtures = Group.Fixtures.Values.TakeRandom(Group.Fixtures.Count / 3);
+				var offFixtures = Group.Fixtures.Values.Except(onFixtures);
 				foreach (var fixture in onFixtures)
 				{
 					fixture.EffectAttributes[LightFixtureConstants.ApeshitBlackout].Value = 0f;

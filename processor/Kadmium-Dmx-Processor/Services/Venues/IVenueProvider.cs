@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.Actors;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 
 namespace Kadmium_Dmx_Processor.Services.Venues
 {

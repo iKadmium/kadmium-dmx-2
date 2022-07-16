@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kadmium-Dmx-Processor\Kadmium-Dmx-Processor.csproj" />
+    <ProjectReference Include="..\..\shared\Shared.csproj" />
   </ItemGroup>
 
 </Project>

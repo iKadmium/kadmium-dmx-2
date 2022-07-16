@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.MovingFixtureEffects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 
 namespace Kadmium_Dmx_Processor.Test.Effects.FixtureEffects.MovementFixtureEffects
 {
@@ -20,7 +20,7 @@ namespace Kadmium_Dmx_Processor.Test.Effects.FixtureEffects.MovementFixtureEffec
 		{
 			string axisName = "Axis";
 			var axis = new Axis(oldMinDegrees, oldMaxDegrees);
-			var fixture = FixtureHelper.GetFixture(axisName);
+			var fixture = FixtureHelper.GetMovingFixture(axisName);
 			var attribute = fixture.AddAttribute(axisName);
 			var effect = new AxisConstrainer(axisName, newMinDegrees, newMaxDegrees, fixture);
 			attribute.Value = value;

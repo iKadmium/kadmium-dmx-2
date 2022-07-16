@@ -6,7 +6,7 @@ using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.EffectRenderers;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 using Kadmium_Dmx_Processor.Utilities;
 
 namespace Kadmium_Dmx_Processor.EffectRenderers.Color
@@ -15,9 +15,9 @@ namespace Kadmium_Dmx_Processor.EffectRenderers.Color
 	{
 		private ushort WhiteAddress { get; }
 
-		public RgbwRenderer(FixtureActor actor) : base(actor)
+		public RgbwRenderer(FixtureActor actor, ushort fixtureAddress) : base(actor, fixtureAddress)
 		{
-			WhiteAddress = AddRenderTarget(LightFixtureConstants.White, actor);
+			WhiteAddress = AddRenderTarget(LightFixtureConstants.White, actor, fixtureAddress);
 		}
 
 		public void Render(Memory<byte> dmxMemory)

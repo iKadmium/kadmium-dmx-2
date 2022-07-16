@@ -35,12 +35,13 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 			};
 		}
 
-		public async Task Send(string topic, Memory<byte> packet)
+		public async Task Send(string topic, Memory<byte> packet, bool retain = true)
 		{
 			var message = new MqttApplicationMessage
 			{
 				Topic = topic,
-				Payload = packet.ToArray()
+				Payload = packet.ToArray(),
+				Retain = retain
 			};
 			await Client.PublishAsync(message);
 		}

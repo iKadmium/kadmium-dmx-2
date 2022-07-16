@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.EffectRenderers.Movement;
 using Kadmium_Dmx_Processor.Effects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 
 namespace Kadmium_Dmx_Processor.Test.EffectRenderers
 {
@@ -40,10 +40,10 @@ namespace Kadmium_Dmx_Processor.Test.EffectRenderers
 				}
 			);
 
-			var fixtureInstance = new FixtureInstance(1, "Someone", "Something", personality);
+			var fixtureInstance = new FixtureInstance("Someone", "Something", personality);
 			var actor = new FixtureActor(fixtureInstance, definition);
 
-			var renderer = new Movement16BitRenderer(actor, definition.MovementAxis["Twist"], "Twist");
+			var renderer = new Movement16BitRenderer(actor, definition.MovementAxis["Twist"], "Twist", 1);
 
 			actor.FramePipeline["Twist"].Value = value;
 

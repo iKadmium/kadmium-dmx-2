@@ -6,7 +6,7 @@ using Kadmium_Dmx_Processor.Actors;
 using Kadmium_Dmx_Processor.EffectRenderers;
 using Kadmium_Dmx_Processor.Effects;
 using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 using Kadmium_Dmx_Processor.Utilities;
 
 namespace Kadmium_Dmx_Processor.EffectRenderers.Color
@@ -15,9 +15,9 @@ namespace Kadmium_Dmx_Processor.EffectRenderers.Color
 	{
 		private ushort DimmerAddress { get; }
 
-		public RgbDimmerRenderer(FixtureActor actor) : base(actor)
+		public RgbDimmerRenderer(FixtureActor actor, ushort fixtureAddress) : base(actor, fixtureAddress)
 		{
-			DimmerAddress = AddRenderTarget(LightFixtureConstants.Dimmer, actor);
+			DimmerAddress = AddRenderTarget(LightFixtureConstants.Dimmer, actor, fixtureAddress);
 		}
 
 		public void Render(Memory<byte> dmxMemory)

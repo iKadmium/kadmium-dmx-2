@@ -17,8 +17,8 @@ namespace Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects
 		public ApeshitClient(FixtureActor actor)
 		{
 			Actor = actor;
-			BlackoutAttribute = actor.AddAttribute(LightFixtureConstants.ApeshitBlackout);
-			ActiveAttribute = actor.AddAttribute(LightFixtureConstants.ApeshitActive);
+			BlackoutAttribute = actor.AddAttribute(LightFixtureConstants.ApeshitBlackout, true);
+			ActiveAttribute = actor.AddAttribute(LightFixtureConstants.ApeshitActive, true);
 			BrightnessAttribute = actor.FramePipeline[LightFixtureConstants.Brightness];
 			ShutterAttribute = actor.FramePipeline[LightFixtureConstants.Shutter];
 		}

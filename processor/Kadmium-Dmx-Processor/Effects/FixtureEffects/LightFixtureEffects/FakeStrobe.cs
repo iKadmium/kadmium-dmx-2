@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Processor.Actors;
-using Kadmium_Dmx_Processor.Models;
+using Kadmium_Dmx_Shared.Models;
 using Kadmium_Dmx_Processor.Services.TimeProvider;
 using Kadmium_Dmx_Processor.Utilities;
 
@@ -17,7 +17,7 @@ namespace Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects
 		public const float FASTEST_CYCLE_TIME_MS = 1000 / MAX_SPEED_HZ;
 		public const float SLOWEST_CYCLE_TIME_MS = 1000 / MIN_SPEED_HZ;
 
-		private ITimeProvider timeProvider;
+		private ITimeProvider TimeProvider { get; }
 		private TimeSpan timeSinceLastStrobe;
 		private EffectAttribute ShutterAttribute { get; }
 		private bool on = true;
@@ -25,7 +25,7 @@ namespace Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects
 		public FakeStrobe(ITimeProvider timeProvider, FixtureActor actor)
 		{
 			ShutterAttribute = actor.AddAttribute(LightFixtureConstants.Shutter);
-			this.timeProvider = timeProvider;
+			TimeProvider = timeProvider;
 			this.timeSinceLastStrobe = TimeSpan.Zero;
 		}
 
@@ -38,7 +38,7 @@ namespace Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects
 			}
 
 			var cycleTime = Scale.Rescale(value, 0, 1, SLOWEST_CYCLE_TIME_MS, FASTEST_CYCLE_TIME_MS);
-			this.timeSinceLastStrobe += timeProvider.TimeSinceLastRender;
+			this.timeSinceLastStrobe += TimeProvider.TimeSinceLastRender;
 			if (this.timeSinceLastStrobe.TotalMilliseconds > cycleTime)
 			{
 				this.on = !on;
