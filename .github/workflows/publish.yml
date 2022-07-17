@@ -25,6 +25,9 @@ jobs:
           - project: WebAPI
             workdir: webapi
             image-name: webapi
+          - project: WebUI
+            workdir: webui
+            image-name: webui
     runs-on: ubuntu-latest
     permissions:
       contents: read

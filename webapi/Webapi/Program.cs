@@ -27,7 +27,7 @@ namespace Kadmium_Dmx_Shared
 			builder.Services.AddSwaggerGen();
 
 			builder.Services.AddSingleton<ICrudProvider<VenueKey, Venue>, VenueProvider>();
-			builder.Services.AddSingleton<ICrudProvider<FixtureDefinitionKey, FixtureDefinition>, FixtureDefinitionProvider>();
+			builder.Services.AddSingleton<IFixtureDefinitionProvider, FixtureDefinitionProvider>();
 
 			IKadmiumDmxConfigurationProvider configProvider = new KadmiumDmxEnvironmentVariableConfigurationProvider();
 			builder.Services.AddSingleton<IKadmiumDmxConfigurationProvider>(configProvider);
@@ -40,14 +40,13 @@ namespace Kadmium_Dmx_Shared
 			app.UseSwagger();
 			app.UseSwaggerUI();
 
-			app.UseHttpsRedirection();
+			//app.UseHttpsRedirection();
 
 			app.UseCors(policy =>
 			{
 				policy.AllowAnyHeader();
 				policy.AllowAnyMethod();
 				policy.AllowAnyOrigin();
-				policy.AllowCredentials();
 			});
 
 			app.UseAuthorization();

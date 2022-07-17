@@ -14,7 +14,7 @@ namespace Webapi.Services
 		where TObject : IHasId
 	{
 		private IMongoDatabase Db { get; }
-		private IMongoCollection<TObject> Collection => Db.GetCollection<TObject>(CollectionName);
+		protected IMongoCollection<TObject> Collection => Db.GetCollection<TObject>(CollectionName);
 		protected abstract ProjectionDefinition<TObject> KeyProjection { get; }
 		protected abstract string CollectionName { get; }
 
@@ -80,5 +80,14 @@ namespace Webapi.Services
 		}
 
 		protected abstract FilterDefinition<TObject> GetSearchFilter(string query);
+
+		public async Task<IEnumerable<TObject>> Read(IEnumerable<string> ids)
+		{
+			var result = await Collection
+				.Find(Builders<TObject>.Filter.Where(x => ids.Contains(x.Id)))
+				.ToListAsync();
+
+			return result;
+		}
 	}
 }

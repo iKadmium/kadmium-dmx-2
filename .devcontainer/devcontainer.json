@@ -7,9 +7,9 @@
 		"args": {
 			// Update 'VARIANT' to pick a .NET Core version: 3.1, 5.0, 6.0
 			// Append -bullseye or -focal to pin to an OS version.
-			"VARIANT": "6.0-bullseye",
+			"VARIANT": "6.0",
 			// Options
-			"NODE_VERSION": "none"
+			"NODE_VERSION": "lts/*"
 		}
 	},
 	"runArgs": [
@@ -39,7 +39,8 @@
 				"kreativ-software.csharpextensions",
 				"hbenl.vscode-test-explorer",
 				"ms-vscode.test-adapter-converter",
-				"formulahendry.dotnet-test-explorer"
+				"formulahendry.dotnet-test-explorer",
+				"svelte.svelte-vscode"
 			]
 		}
 	},
@@ -71,8 +72,5 @@
 	// "postCreateCommand": "dotnet restore",
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
-	"remoteEnv": {
-		"PATH": "${containerEnv:PATH}:~/.bun/bin"
-	},
-	"postCreateCommand": "${containerWorkspaceFolder}/webui/install-bun.sh"
+	"postCreateCommand": "dotnet dev-certs https"
 }

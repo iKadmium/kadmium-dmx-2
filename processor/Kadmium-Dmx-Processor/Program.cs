@@ -47,14 +47,12 @@ namespace Kadmium_Dmx_Processor
 			var configProvider = host.Services.GetRequiredService<IConfigurationProvider>();
 
 			var messageHandler = host.Services.GetRequiredService<IMqttEventHandler>();
-			var receiver = host.Services.GetRequiredService<IMqttProvider>();
-			receiver.MqttEventReceived += (sender, mqttEvent) => messageHandler.Handle(mqttEvent);
-			await receiver.Connect();
+			var mqtt = host.Services.GetRequiredService<IMqttProvider>();
+			mqtt.MqttEventReceived += (sender, mqttEvent) => messageHandler.Handle(mqttEvent);
+			await mqtt.Connect();
 
-			var venueProvider = host.Services.GetRequiredService<IVenueProvider>();
-			var venueText = await File.ReadAllTextAsync("data/testVenue.json");
-			var venueDoc = JsonDocument.Parse(venueText);
-			venueProvider.LoadVenue(venueDoc);
+			// var venueBytes = await File.ReadAllBytesAsync("data/defaultVenue.json");
+			// await mqtt.Send("/venue/load", venueBytes, true);
 
 			var timeProvider = host.Services.GetRequiredService<ITimeProvider>();
 			var renderer = host.Services.GetRequiredService<IDmxRenderer>();

@@ -8,7 +8,7 @@ using Webapi.Models;
 
 namespace Webapi.Services
 {
-	public class FixtureDefinitionProvider : MongoCrudProvider<FixtureDefinitionKey, FixtureDefinition>
+	public class FixtureDefinitionProvider : MongoCrudProvider<FixtureDefinitionKey, FixtureDefinition>, IFixtureDefinitionProvider
 	{
 		public FixtureDefinitionProvider(IMongoDatabase db) : base(db)
 		{

@@ -13,7 +13,7 @@ namespace Webapi.Controllers
 	[Route("[controller]")]
 	public class FixtureDefinitionController : CrudControllerBase<FixtureDefinitionKey, FixtureDefinition>
 	{
-		public FixtureDefinitionController(ILogger<VenueController> logger, ICrudProvider<FixtureDefinitionKey, FixtureDefinition> crudProvider) : base(logger, crudProvider)
+		public FixtureDefinitionController(ILogger<VenueController> logger, IFixtureDefinitionProvider crudProvider) : base(logger, crudProvider)
 		{
 		}
 	}

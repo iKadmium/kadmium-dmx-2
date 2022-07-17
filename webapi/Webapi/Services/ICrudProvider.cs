@@ -13,6 +13,7 @@ namespace Webapi.Services
 		Task<string> Create(TObject obj);
 		Task<IEnumerable<TKey>> ReadKeys();
 		Task<TObject> Read(string id);
+		Task<IEnumerable<TObject>> Read(IEnumerable<string> id);
 		Task<TObject> Update(string id, TObject obj);
 		Task Delete(string id);
 		Task<IEnumerable<TKey>> Search(string query);

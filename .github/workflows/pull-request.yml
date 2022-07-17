@@ -6,7 +6,31 @@ on:
 
 
 jobs:
-  build:
+  build-svelte:
+    strategy:
+      matrix:
+        include:
+          - project: WebUI
+            workdir: webui
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts
+      - name: Restore dependencies
+        run: npm ci
+        working-directory: ${{ matrix.workdir }}
+      - name: Test
+        run: npm test
+        working-directory: ${{ matrix.workdir }}
+      - name: Build
+        run: npm run build
+        working-directory: ${{ matrix.workdir }}
+      - name: Check coverage
+        uses: codecov/codecov-action@v1
+  build-dotnet:
     strategy:
       matrix:
         include:
@@ -20,7 +44,7 @@ jobs:
             workdir: webapi
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:

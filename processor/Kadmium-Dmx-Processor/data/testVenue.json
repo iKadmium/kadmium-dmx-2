@@ -1,0 +1,86 @@
+{
+	"groups": [
+		"vocalist"
+	],
+	"fixtureDefinitions": [
+		{
+			"manufacturer": "Someone",
+			"model": "Something",
+			"personalities": {
+				"7ch": {
+					"1": {
+						"name": "Red"
+					},
+					"2": {
+						"name": "Green",
+						"min": 0,
+						"max": 255
+					},
+					"3": {
+						"name": "Blue",
+						"min": 0,
+						"max": 255
+					},
+					"4": {
+						"name": "PanCoarse",
+						"min": 0,
+						"max": 255
+					},
+					"5": {
+						"name": "PanFine"
+					},
+					"6": {
+						"name": "TiltCoarse"
+					},
+					"7": {
+						"name": "TiltFine"
+					}
+				}
+			},
+			"movementAxis": {
+				"Pan": {
+					"minAngle": -270,
+					"maxAngle": 270
+				},
+				"Tilt": {
+					"minAngle": -135,
+					"maxAngle": 135
+				}
+			}
+		}
+	],
+	"venue": {
+		"name": "My venue",
+		"city": "My City",
+		"universes": {
+			"1": {
+				"name": "First universe",
+				"fixtures": {
+					"1": {
+						"manufacturer": "Someone",
+						"model": "Something",
+						"personality": "7ch",
+						"groups": [
+							"vocalist"
+						],
+						"options": {
+							"BrightnessLimiter": {
+								"maxBrightness": 0.8
+							},
+							"AxisConstrainer": {
+								"Pan": {
+									"min": -90,
+									"max": 90
+								},
+								"Tilt": {
+									"min": 0,
+									"max": 90
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -29,5 +29,7 @@
 			"name": "Web UI"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"typescript.preferences.importModuleSpecifier": "relative"
+	}
 }

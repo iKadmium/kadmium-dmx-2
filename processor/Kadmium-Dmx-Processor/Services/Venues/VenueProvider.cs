@@ -102,6 +102,7 @@ namespace Kadmium_Dmx_Processor.Services.Venues
 			var topicPromises = groupTopics
 				.Union(groupFixtureTopics)
 				.Union(fixtureTopics);
+
 			await MqttProvider.Subscribe(topicPromises);
 		}
 	}

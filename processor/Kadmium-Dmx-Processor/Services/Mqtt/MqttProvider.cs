@@ -24,6 +24,8 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 		public async Task Connect()
 		{
 			await Client.ConnectAsync(ClientOptions);
+			await Client.SubscribeAsync("/venue/load");
+
 			Client.ApplicationMessageReceivedAsync += async (mqttEvent) =>
 			{
 				var topic = mqttEvent.ApplicationMessage.Topic;

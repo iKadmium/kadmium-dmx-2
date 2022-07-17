@@ -4,3 +4,6 @@
 **/.devcontainer/
 **/.vscode/
 **/node-modules/
+**/build/
+**/package/
+**/.svelte-kit/
