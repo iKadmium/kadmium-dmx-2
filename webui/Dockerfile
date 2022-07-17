@@ -4,7 +4,7 @@ WORKDIR /app/
 
 COPY ./webui/package.json ./
 
-RUN npm ci
+RUN npm install
 
 # Copy everything else and build
 COPY ./webui ./
