@@ -2,12 +2,12 @@
 FROM node:latest AS build-env
 WORKDIR /app/
 
-COPY ./package.json ./
+COPY ./webui/package.json ./
 
 RUN npm ci
 
 # Copy everything else and build
-COPY ./* ./
+COPY ./webui ./
 RUN npm run build
 
 # Build runtime image
