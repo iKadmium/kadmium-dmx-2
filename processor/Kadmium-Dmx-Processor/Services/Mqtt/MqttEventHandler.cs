@@ -8,6 +8,7 @@ using Kadmium_Dmx_Processor.Effects.FixtureEffects.LightFixtureEffects;
 using Kadmium_Dmx_Shared.Models;
 using Kadmium_Dmx_Processor.Services.Groups;
 using Kadmium_Dmx_Processor.Services.Venues;
+using Microsoft.Extensions.Logging;
 
 namespace Kadmium_Dmx_Processor.Services.Mqtt
 {
@@ -16,16 +17,27 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 		private IGroupProvider GroupProvider { get; }
 		private IVenueProvider VenueProvider { get; }
 		private IMqttProvider MqttProvider { get; }
+		private ILogger<MqttEventHandler> Logger { get; }
+		private int EventsSinceLastUpdate { get; set; } = 0;
+		private Timer FeedbackTimer { get; }
 
-		public MqttEventHandler(IGroupProvider groupProvider, IVenueProvider venueProvider, IMqttProvider mqttProvider)
+		public MqttEventHandler(IGroupProvider groupProvider, IVenueProvider venueProvider, IMqttProvider mqttProvider, ILogger<MqttEventHandler> logger)
 		{
 			GroupProvider = groupProvider;
 			VenueProvider = venueProvider;
 			MqttProvider = mqttProvider;
+			Logger = logger;
+
+			FeedbackTimer = new Timer((state) =>
+			{
+				Logger.LogInformation($"Received {EventsSinceLastUpdate} in the last second");
+				EventsSinceLastUpdate = 0;
+			}, null, 1000, 1000);
 		}
 
 		public async Task Handle(MqttEvent mqttEvent)
 		{
+			EventsSinceLastUpdate++;
 			var topicParts = mqttEvent.Topic.Split("/", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
 			switch (topicParts[0])
@@ -44,8 +56,7 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 
 		private async Task HandleGroupEvent(string[] topicParts, byte[] payload)
 		{
-			var parsed = System.Text.Encoding.ASCII.GetString(payload[2..]);
-			var value = Single.Parse(parsed);
+			var value = BitConverter.ToSingle(payload);
 
 			var groupName = topicParts[1];
 			if (GroupProvider.Groups.ContainsKey(groupName))
@@ -70,8 +81,7 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 
 		private void HandleFixtureEvent(string[] topicParts, byte[] payload)
 		{
-			var parsed = System.Text.Encoding.ASCII.GetString(payload[2..]);
-			var value = Single.Parse(parsed);
+			var value = BitConverter.ToSingle(payload);
 
 			var parsedUniverse = ushort.TryParse(topicParts[1], out ushort universeId);
 			if (parsedUniverse && VenueProvider.UniverseActors.ContainsKey(universeId))
@@ -88,10 +98,6 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 
 		private void HandleFixtureSet(IEnumerable<FixtureActor> fixtures, string attribute, Single value)
 		{
-			if (attribute == LightFixtureConstants.Hue)
-			{
-				value *= 360f;
-			}
 			foreach (var fixture in fixtures)
 			{
 				fixture.EffectAttributes[attribute].Value = value;

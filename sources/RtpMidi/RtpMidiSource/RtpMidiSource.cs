@@ -1,8 +1,11 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KadmiumRtpMidi;
 using KadmiumRtpMidi.Packets.MidiCommands;
+using Microsoft.Extensions.Logging;
 using RtpMidiSource.Services;
 using RtpMidiSource.Services.Mapping;
 using RtpMidiSource.Services.Mqtt;
@@ -16,24 +19,37 @@ namespace RtpMidiSource
 		private IGroupMapProvider GroupMapProvider { get; }
 		private ISessionProvider SessionProvider { get; }
 		private IAttributeSetter AttributeSetter { get; }
+		private int PacketsSinceLastRender { get; set; } = 0;
+		private ILogger<RtpMidiSource> Logger { get; }
+		private Timer FeedbackTimer { get; }
+		private Session? Session { get; set; }
 
-		public RtpMidiSource(IAttributeMapProvider attributeMapProvider, IGroupMapProvider groupMapProvider, ISessionProvider sessionProvider, IAttributeSetter attributeSetter)
+		public RtpMidiSource(IAttributeMapProvider attributeMapProvider, IGroupMapProvider groupMapProvider, ISessionProvider sessionProvider, IAttributeSetter attributeSetter, ILogger<RtpMidiSource> logger)
 		{
 			AttributeMapProvider = attributeMapProvider;
 			GroupMapProvider = groupMapProvider;
 			SessionProvider = sessionProvider;
 			AttributeSetter = attributeSetter;
+			Logger = logger;
+
+			FeedbackTimer = new Timer((state) =>
+			{
+				Logger.LogInformation($"Received {PacketsSinceLastRender} in the last second");
+				PacketsSinceLastRender = 0;
+			}, null, 1000, 1000);
 		}
 
 		public async Task Listen(CancellationToken token)
 		{
 			var attributeMap = await AttributeMapProvider.GetAttributeMapAsync();
 			var groupMap = await GroupMapProvider.GetGroupMapAsync();
-			var session = await SessionProvider.GetSessionAsync();
+			Session = await SessionProvider.GetSessionAsync();
 
-			session.OnPacketReceived += async (_, receivedEvent) =>
+			Session.OnPacketReceived += async (_, receivedEvent) =>
 			{
 				var tasks = new List<Task>();
+
+				PacketsSinceLastRender++;
 
 				foreach (var command in receivedEvent.Packet.Commands)
 				{
@@ -47,18 +63,14 @@ namespace RtpMidiSource
 
 							var adjustedValue = attribute.GetAdjustedValue(cc.Value);
 
-							tasks.Add(AttributeSetter.SetAttributeAsync(group, attribute.Name, adjustedValue));
+							var bytes = BitConverter.GetBytes(adjustedValue);
+							tasks.Add(AttributeSetter.SetAttributeAsync(group, attribute.Name, bytes));
 						}
 					}
 				}
 
 				await Task.WhenAll(tasks);
 			};
-
-			while (!token.IsCancellationRequested)
-			{
-				await Task.Delay(500, token);
-			}
 		}
 	}
 }

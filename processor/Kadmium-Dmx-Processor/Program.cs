@@ -8,6 +8,7 @@ using Kadmium_Dmx_Processor.Services.TimeProvider;
 using Kadmium_Dmx_Processor.Services.Venues;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Formatter;
@@ -42,6 +43,11 @@ namespace Kadmium_Dmx_Processor
 					services.AddSingleton<IMqttEventHandler, MqttEventHandler>();
 				});
 
+			builder.ConfigureLogging(loggingConfig =>
+			{
+				loggingConfig.AddConsole();
+			});
+
 			var host = builder.Build();
 
 			var configProvider = host.Services.GetRequiredService<IConfigurationProvider>();
@@ -50,9 +56,6 @@ namespace Kadmium_Dmx_Processor
 			var mqtt = host.Services.GetRequiredService<IMqttProvider>();
 			mqtt.MqttEventReceived += (sender, mqttEvent) => messageHandler.Handle(mqttEvent);
 			await mqtt.Connect();
-
-			// var venueBytes = await File.ReadAllBytesAsync("data/defaultVenue.json");
-			// await mqtt.Send("/venue/load", venueBytes, true);
 
 			var timeProvider = host.Services.GetRequiredService<ITimeProvider>();
 			var renderer = host.Services.GetRequiredService<IDmxRenderer>();

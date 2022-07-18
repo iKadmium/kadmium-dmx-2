@@ -36,7 +36,7 @@ namespace RtpMidiSource.Services.Mqtt
 			await Client.ConnectAsync(options);
 		}
 
-		public async Task PublishAsync(string topic, string payload)
+		public async Task PublishAsync(string topic, Memory<byte> payload)
 		{
 			if (!Client.IsConnected)
 			{
@@ -49,7 +49,7 @@ namespace RtpMidiSource.Services.Mqtt
 
 			var message = new MqttApplicationMessageBuilder()
 				.WithTopic(topic)
-				.WithPayload(payload)
+				.WithPayload(payload.ToArray())
 				.Build();
 
 			await Client.PublishAsync(message, CancellationToken.None);

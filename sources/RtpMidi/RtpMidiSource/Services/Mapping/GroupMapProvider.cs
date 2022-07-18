@@ -11,7 +11,7 @@ namespace RtpMidiSource.Services.Mapping
 	{
 		private Cached<Dictionary<int, string>> GroupMap { get; set; }
 
-		public GroupMapProvider(OptionsProvider optionsProvider)
+		public GroupMapProvider(IOptionsProvider optionsProvider)
 		{
 			GroupMap = new Cached<Dictionary<int, string>>(async () =>
 			{

@@ -7,7 +7,7 @@ namespace RtpMidiSource.Services.Mqtt
 {
 	public interface IAttributeSetter
 	{
-		Task SetAttributeAsync<T>(string group, string attribute, T value);
+		Task SetAttributeAsync(string group, string attribute, Memory<byte> value);
 
 	}
 }

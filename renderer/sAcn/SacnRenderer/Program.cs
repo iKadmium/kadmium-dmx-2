@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Formatter;
@@ -33,6 +34,7 @@ namespace SacnRenderer
 					services.AddSingleton<ISacnRenderer, SacnRenderer.Services.Sacn.SacnRenderer>();
 				});
 
+			builder.ConfigureLogging(loggingConfig => loggingConfig.AddConsole());
 			var host = builder.Build();
 
 			var listener = host.Services.GetRequiredService<IMqttProvider>();

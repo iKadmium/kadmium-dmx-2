@@ -1,8 +1,7 @@
 {
 	"groupMap": {
-		"1": "vocalist",
-		"2": "guitarist",
-		"3": "bassist"
+		"1": "front",
+		"2": "side"
 	},
 	"attributeMap": {
 		"1": {

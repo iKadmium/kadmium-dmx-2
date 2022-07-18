@@ -15,15 +15,10 @@ namespace RtpMidiSource.Services.Mqtt
 			ConnectionProvider = connectionProvider;
 		}
 
-		public async Task SetAttributeAsync<T>(string group, string attribute, T value)
+		public async Task SetAttributeAsync(string group, string attribute, Memory<byte> value)
 		{
-			var topic = $"groups/{group}/{attribute}";
-			var payload = value?.ToString();
-
-			if (payload == null)
-			{
-				throw new ArgumentNullException("Value was null");
-			}
+			var topic = $"/group/{group}/{attribute}";
+			var payload = value;
 
 			await ConnectionProvider.PublishAsync(topic, payload);
 		}

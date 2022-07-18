@@ -11,7 +11,7 @@ namespace RtpMidiSource.Services.Mapping
 	{
 		private Cached<Dictionary<int, AttributeMapping>> AttributeMap { get; set; }
 
-		public AttributeMapProvider(OptionsProvider optionsProvider)
+		public AttributeMapProvider(IOptionsProvider optionsProvider)
 		{
 			AttributeMap = new Cached<Dictionary<int, AttributeMapping>>(async () =>
 			{
