@@ -15,10 +15,25 @@ COPY ./webapi/Webapi.Test/ ./Webapi.Test/
 COPY ./shared/ ../shared/
 RUN dotnet publish -c Release -o dist
 
+
+# Build UI
+# syntax=docker/dockerfile:1
+FROM node:latest AS ui-build-env
+WORKDIR /app/
+
+COPY ./webui/package.json ./
+
+RUN npm install
+
+# Copy everything else and build
+COPY ./webui ./
+RUN npm run build
+
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
 WORKDIR /app
 COPY --from=build-env /app/webapi/dist .
+COPY --from=ui-build-env /app/build ./htdocs/
 
 EXPOSE 80
 

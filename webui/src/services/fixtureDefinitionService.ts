@@ -1,7 +1,7 @@
 import type { IFixtureDefinition, IFixtureDefinitionKey } from "../models/fixtureDefinition";
 import { getServiceUri } from "./backendService"
 
-const getBaseUri = () => getServiceUri('/fixtureDefinition/');
+const getBaseUri = () => getServiceUri('fixtureDefinition/');
 
 export const getFixtureDefitionKeys = async () => {
 	const uri = getBaseUri();

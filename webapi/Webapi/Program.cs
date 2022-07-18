@@ -36,6 +36,11 @@ namespace Kadmium_Dmx_Shared
 			var db = client.GetDatabase("kadmium-dmx-2");
 			builder.Services.AddSingleton<IMongoDatabase>(db);
 
+			builder.Services.AddSpaStaticFiles(configuration =>
+			{
+				configuration.RootPath = "htdocs";
+			});
+
 			var app = builder.Build();
 
 			app.UseSwagger();
@@ -52,6 +57,11 @@ namespace Kadmium_Dmx_Shared
 
 			app.UseAuthorization();
 			app.MapControllers();
+			app.UseSpaStaticFiles(new StaticFileOptions { });
+			app.UseSpa(spa =>
+			{
+				spa.Options.SourcePath = "htdocs";
+			});
 
 			await app.RunAsync();
 		}

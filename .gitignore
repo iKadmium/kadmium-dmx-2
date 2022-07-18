@@ -8,6 +8,8 @@ dist/
 **/*.tgz
 **/*.log
 
+**/htdocs
+
 package-lock.json
 **/*.bun
 

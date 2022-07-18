@@ -10,7 +10,7 @@ using Webapi.Services;
 namespace Webapi.Controllers
 {
 	[ApiController]
-	[Route("[controller]")]
+	[Route("api/[controller]")]
 	public class FixtureDefinitionController : CrudControllerBase<FixtureDefinitionKey, FixtureDefinition>
 	{
 		public FixtureDefinitionController(ILogger<VenueController> logger, IFixtureDefinitionProvider crudProvider) : base(logger, crudProvider)

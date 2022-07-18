@@ -1,7 +1,7 @@
 import type { IVenue, IVenueKey } from "../models/venue";
 import { getServiceUri } from "./backendService"
 
-const getBaseUri = () => getServiceUri('/venue/');
+const getBaseUri = () => getServiceUri('venue/');
 
 export const getVenueKeys = async () => {
 	const uri = getBaseUri();

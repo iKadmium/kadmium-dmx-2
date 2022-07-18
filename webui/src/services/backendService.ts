@@ -1,6 +1,16 @@
+/// <reference types="vite/client" />
+
 export const getServiceUri = (path: string) => {
-	const port = 5185;
-	const hostname = window.location.hostname;
-	const scheme = window.location.protocol;
-	return new URL(path, `${scheme}//${hostname}:${port}`);
+	let apiRoot: URL;
+	if (import.meta.env.VITE_API_ROOT) {
+		apiRoot = new URL(import.meta.env.VITE_API_ROOT);
+	}
+	else if (import.meta.env.DEV) {
+		apiRoot = new URL("/api/", 'http://localhost:5185');
+	}
+	else {
+		apiRoot = new URL("/api/", window.location.toString());
+	}
+	console.log(import.meta.env);
+	return new URL(path, apiRoot);
 }
