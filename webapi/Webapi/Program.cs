@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Kadmium_Dmx_Shared.Models;
 using MongoDB.Bson.Serialization.Conventions;
+using MongoDB.Bson.Serialization.Options;
 using MongoDB.Driver;
 using Webapi.Models;
 using Webapi.Services;
@@ -18,9 +19,8 @@ namespace Kadmium_Dmx_Shared
 			var camelCasePack = new ConventionPack { new CamelCaseElementNameConvention() };
 			ConventionRegistry.Register("camelCase", camelCasePack, t => true);
 
-			var dictionaryPack = new ConventionPack { new DictionaryRepresentationConvention() };
-			ConventionRegistry.Register("dictionaryRep", dictionaryPack, t => t == typeof(FixtureDefinition));
-			ConventionRegistry.Register("dictionaryRep", dictionaryPack, t => t == typeof(Venue));
+			var dictionaryPack = new ConventionPack { new DictionaryRepresentationConvention(DictionaryRepresentation.ArrayOfArrays) };
+			ConventionRegistry.Register("dictionaryRep", dictionaryPack, t => true);
 
 			builder.Services.AddControllers().AddJsonOptions((options) => options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
 			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
