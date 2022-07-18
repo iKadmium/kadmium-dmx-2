@@ -57,13 +57,8 @@ namespace Kadmium_Dmx_Processor
 			mqtt.MqttEventReceived += (sender, mqttEvent) => messageHandler.Handle(mqttEvent);
 			await mqtt.Connect();
 
-			var timeProvider = host.Services.GetRequiredService<ITimeProvider>();
 			var renderer = host.Services.GetRequiredService<IDmxRenderer>();
-			var renderTimer = new Timer(async (state) =>
-			{
-				await renderer.Render();
-				timeProvider.OnRender();
-			}, null, 0, (1000 / configProvider.RefreshRate));
+			renderer.Start();
 
 			await host.RunAsync();
 		}

@@ -15,7 +15,10 @@
 			"cwd": "${workspaceFolder}/SacnRenderer",
 			// For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
 			"console": "internalConsole",
-			"stopAtEntry": false
+			"stopAtEntry": false,
+			"env": {
+				"UNICAST_TARGETS": "192.168.0.69"
+			}
 		},
 		{
 			"name": ".NET Core Attach",
