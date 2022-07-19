@@ -8,6 +8,7 @@ using Kadmium_Dmx_Processor.Services.Groups;
 using Kadmium_Dmx_Processor.Services.Venues;
 using Kadmium_Dmx_Processor.Services.Configuration;
 using Kadmium_Dmx_Processor.Services.TimeProvider;
+using Microsoft.Extensions.Logging;
 
 namespace Kadmium_Dmx_Processor.Services.Renderer
 {
@@ -19,33 +20,42 @@ namespace Kadmium_Dmx_Processor.Services.Renderer
 		private IConfigurationProvider ConfigurationProvider { get; }
 		private Timer? RenderTimer { get; set; }
 		private ITimeProvider TimeProvider { get; }
+		private ILogger<DmxRenderer> Logger { get; }
 
-		public DmxRenderer(IVenueProvider venueProvider, IGroupProvider groupProvider, IDmxRenderTarget renderTarget, IConfigurationProvider configurationProvider, ITimeProvider timeProvider)
+		public DmxRenderer(IVenueProvider venueProvider, IGroupProvider groupProvider, IDmxRenderTarget renderTarget, IConfigurationProvider configurationProvider, ITimeProvider timeProvider, ILogger<DmxRenderer> logger)
 		{
 			VenueProvider = venueProvider;
 			GroupProvider = groupProvider;
 			RenderTarget = renderTarget;
 			ConfigurationProvider = configurationProvider;
 			TimeProvider = timeProvider;
+			Logger = logger;
 		}
 
 		public async Task Render()
 		{
-			TimeProvider.OnRender();
-			foreach (var group in GroupProvider.Groups.Values)
+			try
 			{
-				group.Clear();
-				group.Draw();
+				TimeProvider.OnRender();
+				foreach (var group in GroupProvider.Groups.Values)
+				{
+					group.Clear();
+					group.Draw();
+				}
+
+				var promises = VenueProvider.UniverseActors.Select(x =>
+				{
+					x.Value.Clear();
+					x.Value.Draw();
+					return x.Value.Render(RenderTarget, x.Key);
+				});
+
+				await Task.WhenAll(promises);
 			}
-
-			var promises = VenueProvider.UniverseActors.Select(x =>
+			catch (Exception e)
 			{
-				x.Value.Clear();
-				x.Value.Draw();
-				return x.Value.Render(RenderTarget, x.Key);
-			});
-
-			await Task.WhenAll(promises);
+				Logger.LogError(e, "Aargh");
+			}
 		}
 
 		public void Start()

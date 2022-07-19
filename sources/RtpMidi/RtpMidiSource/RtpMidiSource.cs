@@ -63,8 +63,7 @@ namespace RtpMidiSource
 
 							var adjustedValue = attribute.GetAdjustedValue(cc.Value);
 
-							var bytes = BitConverter.GetBytes(adjustedValue);
-							tasks.Add(AttributeSetter.SetAttributeAsync(group, attribute.Name, bytes));
+							AttributeSetter.SetAttributeCached(group, attribute.Name, adjustedValue);
 						}
 					}
 				}

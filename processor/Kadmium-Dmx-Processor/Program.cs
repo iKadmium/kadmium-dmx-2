@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Formatter;
 
 namespace Kadmium_Dmx_Processor
@@ -24,15 +25,19 @@ namespace Kadmium_Dmx_Processor
 				.ConfigureServices((hostContext, services) =>
 				{
 					services.AddSingleton<IConfigurationProvider, EnvironmentVariableConfigurationProvider>();
-					services.AddSingleton<MqttClientOptions>((serviceProvider) =>
+					services.AddSingleton<ManagedMqttClientOptions>((serviceProvider) =>
 					{
 						var configProvider = serviceProvider.GetRequiredService<IConfigurationProvider>();
-						return new MqttClientOptionsBuilder()
+						return new ManagedMqttClientOptionsBuilder()
+						.WithAutoReconnectDelay(TimeSpan.FromSeconds(1))
+						.WithClientOptions(new MqttClientOptionsBuilder()
 							.WithTcpServer(configProvider.MqttHost)
 							.WithProtocolVersion(MqttProtocolVersion.V500)
-							.Build();
+							.Build()
+						)
+						.Build();
 					});
-					services.AddSingleton<IMqttClient>((serviceProvider) => new MqttFactory().CreateMqttClient());
+					services.AddSingleton<IManagedMqttClient>((serviceProvider) => new MqttFactory().CreateManagedMqttClient());
 					services.AddSingleton<IMqttProvider, MqttProvider>();
 					services.AddSingleton<IDmxRenderer, DmxRenderer>();
 					services.AddSingleton<IGroupProvider, GroupProvider>();

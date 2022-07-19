@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Formatter;
 
 namespace Kadmium_Dmx_Processor.Services.Mqtt
@@ -11,11 +12,11 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 	public class MqttProvider : IMqttProvider
 	{
 		public event EventHandler<MqttEvent>? MqttEventReceived;
-		private IMqttClient Client { get; }
-		private MqttClientOptions ClientOptions { get; }
+		private IManagedMqttClient Client { get; }
+		private ManagedMqttClientOptions ClientOptions { get; }
 		private List<string> Subscriptions { get; } = new List<string>();
 
-		public MqttProvider(IMqttClient client, MqttClientOptions options)
+		public MqttProvider(IManagedMqttClient client, ManagedMqttClientOptions options)
 		{
 			Client = client;
 			ClientOptions = options;
@@ -23,7 +24,7 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 
 		public async Task Connect()
 		{
-			await Client.ConnectAsync(ClientOptions);
+			await Client.StartAsync(ClientOptions);
 			await Client.SubscribeAsync("/venue/load");
 
 			Client.ApplicationMessageReceivedAsync += async (mqttEvent) =>
@@ -45,7 +46,7 @@ namespace Kadmium_Dmx_Processor.Services.Mqtt
 				Payload = packet.ToArray(),
 				Retain = retain
 			};
-			await Client.PublishAsync(message);
+			await Client.EnqueueAsync(message);
 		}
 
 		public Task Subscribe(params string[] topics)

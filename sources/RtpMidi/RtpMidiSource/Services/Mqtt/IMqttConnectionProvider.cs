@@ -8,6 +8,7 @@ namespace RtpMidiSource.Services.Mqtt
 {
 	public interface IMqttSender
 	{
+		Task Begin();
 		Task PublishAsync(string topic, Memory<byte> payload);
 	}
 }

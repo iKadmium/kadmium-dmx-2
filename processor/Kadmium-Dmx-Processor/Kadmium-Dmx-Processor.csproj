@@ -11,7 +11,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-    <PackageReference Include="MqttNet" Version="4.0.1.184" />
+    <PackageReference Include="MqttNet" Version="4.0.2.221" />
+    <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.0.2.221" />
   </ItemGroup>
 
   <ItemGroup>

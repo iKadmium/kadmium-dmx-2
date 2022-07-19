@@ -9,9 +9,10 @@
 
   <ItemGroup>
     <PackageReference Include="KadmiumRtpMidi" Version="0.0.1" />
-    <PackageReference Include="Mqttnet" Version="3.1.2" />
+    <PackageReference Include="Mqttnet" Version="4.0.2.221" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.0.2.221" />
   </ItemGroup>
 
 </Project>
