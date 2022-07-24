@@ -11,6 +11,5 @@ export const getServiceUri = (path: string) => {
 	else {
 		apiRoot = new URL("/api/", window.location.toString());
 	}
-	console.log(import.meta.env);
 	return new URL(path, apiRoot);
 }

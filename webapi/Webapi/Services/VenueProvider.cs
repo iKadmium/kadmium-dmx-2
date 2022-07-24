@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Shared.Models;
 using MongoDB.Driver;
@@ -24,6 +25,13 @@ namespace Webapi.Services
 				x.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
 				|| x.City.Contains(query, StringComparison.OrdinalIgnoreCase)
 			);
+		}
+
+		protected override IOrderedFindFluent<Venue, Venue> Sort(IFindFluent<Venue, Venue> find)
+		{
+			return find
+				.SortBy(x => x.City)
+				.ThenBy(x => x.Name);
 		}
 	}
 }

@@ -1,23 +1,27 @@
+export interface IDmxChannel {
+	name: string;
+	min?: number;
+	max?: number;
+}
+
 export interface IMovementAxis {
 	minAngle: number;
 	maxAngle: number;
 }
 
 export interface IFixturePersonality {
-	[key: number]: {
-		name: string;
-		min?: number;
-		max?: number;
-	}
+	[key: number]: IDmxChannel;
+}
+
+export interface IFixturePersonalityMap {
+	[name: string]: IFixturePersonality;
 }
 
 export interface IFixtureDefinition {
-	id: string;
+	id?: string;
 	manufacturer: string;
 	model: string;
-	personalities: {
-		[name: string]: IFixturePersonality;
-	};
+	personalities: IFixturePersonalityMap;
 	movementAxis: {
 		[name: string]: IMovementAxis;
 	};

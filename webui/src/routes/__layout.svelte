@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Header from '$lib/header/Header.svelte';
-	import '../app.css';
+	//import '../app.css';
+	//import { Styles } from 'sveltestrap';
+	import '../bootstrap.css';
 
 	import MqttContext from '../context/MqttContext.svelte';
 </script>

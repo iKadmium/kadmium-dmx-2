@@ -36,6 +36,7 @@
 		"@fontsource/fira-mono": "^4.5.0",
 		"cookie": "^0.4.1",
 		"mqtt": "^4.3.7",
-		"svelte-icons": "^2.1.0"
+		"svelte-icons": "^2.1.0",
+		"sveltestrap": "^5.9.0"
 	}
 }

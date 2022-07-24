@@ -27,5 +27,12 @@ namespace Webapi.Services
 				|| x.Model.Contains(query, StringComparison.OrdinalIgnoreCase)
 			);
 		}
+
+		protected override IOrderedFindFluent<FixtureDefinition, FixtureDefinition> Sort(IFindFluent<FixtureDefinition, FixtureDefinition> find)
+		{
+			return find
+				.SortBy(x => x.Manufacturer)
+				.ThenBy(x => x.Model);
+		}
 	}
 }

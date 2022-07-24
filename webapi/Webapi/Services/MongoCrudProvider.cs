@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Shared.Models;
 using MongoDB.Bson;
@@ -17,6 +18,7 @@ namespace Webapi.Services
 		protected IMongoCollection<TObject> Collection => Db.GetCollection<TObject>(CollectionName);
 		protected abstract ProjectionDefinition<TObject> KeyProjection { get; }
 		protected abstract string CollectionName { get; }
+		protected abstract IOrderedFindFluent<TObject, TObject> Sort(IFindFluent<TObject, TObject> find);
 
 		public MongoCrudProvider(IMongoDatabase db)
 		{
@@ -32,12 +34,17 @@ namespace Webapi.Services
 
 		public async Task<IEnumerable<TKey>> ReadKeys()
 		{
-			var result = await Collection
-				.Find(Builders<TObject>.Filter.Empty)
+			var find = Collection
+				.Find(Builders<TObject>.Filter.Empty);
+
+			var sortedFind = Sort(find);
+
+			var result = await sortedFind
 				.Project(KeyProjection)
 				.ToListAsync();
 
 			var keys = result.Select(x => BsonSerializer.Deserialize<TKey>(x));
+
 			return keys;
 		}
 

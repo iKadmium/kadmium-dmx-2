@@ -23,3 +23,13 @@ export const getVenuePayload = async (id: string) => {
 	const json = await result.json() as IVenue;
 	return json;
 }
+
+export const deleteVenue = async (id: string) => {
+	const uri = new URL(`${id}/payload`, getBaseUri());
+	await fetch(
+		uri,
+		{
+			method: 'DELETE'
+		}
+	);
+}
