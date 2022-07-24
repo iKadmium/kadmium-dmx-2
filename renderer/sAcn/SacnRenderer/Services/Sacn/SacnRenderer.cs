@@ -35,9 +35,10 @@ namespace SacnRenderer.Services.Sacn
 			}
 			UnicastSenders = unicastSenders;
 		}
+
 		public async Task Render(ushort universeId, Memory<byte> data)
 		{
-			var packet = PacketFactory.CreateDataPacket(universeId, data.Span.ToArray());
+			var packet = PacketFactory.CreateDataPacket(universeId, data.Span[1..].ToArray());
 			var tasks = UnicastSenders
 				.Select(x => x.Send(packet))
 				.Union(MulticastSenders.Select(x => x.Send(packet)));
