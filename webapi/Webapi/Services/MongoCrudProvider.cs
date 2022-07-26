@@ -19,10 +19,12 @@ namespace Webapi.Services
 		protected abstract ProjectionDefinition<TObject> KeyProjection { get; }
 		protected abstract string CollectionName { get; }
 		protected abstract IOrderedFindFluent<TObject, TObject> Sort(IFindFluent<TObject, TObject> find);
+		protected ILogger<MongoCrudProvider<TKey, TObject>> Logger { get; }
 
-		public MongoCrudProvider(IMongoDatabase db)
+		public MongoCrudProvider(IMongoDatabase db, ILogger<MongoCrudProvider<TKey, TObject>> logger)
 		{
 			Db = db;
+			Logger = logger;
 		}
 
 		public async Task<string> Create(TObject obj)

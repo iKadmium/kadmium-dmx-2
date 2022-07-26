@@ -30,9 +30,9 @@ namespace Kadmium_Dmx_Shared
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
-			builder.Services.AddSingleton<ICrudProvider<VenueKey, Venue>, VenueProvider>();
+			builder.Services.AddSingleton<IVenueProvider, VenueProvider>();
 			builder.Services.AddSingleton<IFixtureDefinitionProvider, FixtureDefinitionProvider>();
-			builder.Services.AddSingleton<ICrudProvider<MidiMapKey, MidiMap>, MidiMapProvider>();
+			builder.Services.AddSingleton<IMidiMapProvider, MidiMapProvider>();
 			builder.Services.AddSingleton<IDefaultsProvider, MongoDefaultsProvider>();
 			builder.Services.AddSingleton<IMqttConnectionProvider, MqttConnectionProvider>();
 
@@ -86,31 +86,19 @@ namespace Kadmium_Dmx_Shared
 			var mqtt = app.Services.GetRequiredService<IMqttConnectionProvider>();
 			await mqtt.Begin();
 
-			await LoadDefault<MidiMapKey, MidiMap>(defaults.MidiMapId, app, mqtt, "/midimap/load");
-			await LoadDefault<VenueKey, Venue>(defaults.VenueId, app, mqtt, "/venue/load");
+			if (defaults.VenueId != null)
+			{
+				var venueProvider = app.Services.GetRequiredService<IVenueProvider>();
+				await venueProvider.Activate(defaults.VenueId);
+			}
+			if (defaults.MidiMapId != null)
+			{
+				var midiMapProvider = app.Services.GetRequiredService<IMidiMapProvider>();
+				await midiMapProvider.Activate(defaults.MidiMapId);
+			}
 
 			await app.RunAsync();
 		}
 
-		private static async Task LoadDefault<TKey, TObject>(string? id, WebApplication app, IMqttConnectionProvider mqtt, string topic)
-			where TKey : IHasId
-			where TObject : IHasId
-		{
-			if (id != null)
-			{
-				try
-				{
-					var midiMapProvider = app.Services.GetRequiredService<ICrudProvider<TKey, TObject>>();
-					var midiMap = await midiMapProvider.Read(id);
-					var serialized = JsonSerializer.SerializeToUtf8Bytes(midiMap);
-					await mqtt.PublishAsync(topic, serialized, true);
-				}
-				catch (Exception e)
-				{
-					var logger = app.Services.GetRequiredService<ILogger<MongoDefaultsProvider>>();
-					logger.LogError(e, "Could not load default for " + typeof(TObject).Name);
-				}
-			}
-		}
 	}
 }

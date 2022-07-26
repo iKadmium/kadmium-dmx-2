@@ -10,7 +10,7 @@ namespace Webapi.Services
 {
 	public class FixtureDefinitionProvider : MongoCrudProvider<FixtureDefinitionKey, FixtureDefinition>, IFixtureDefinitionProvider
 	{
-		public FixtureDefinitionProvider(IMongoDatabase db) : base(db)
+		public FixtureDefinitionProvider(IMongoDatabase db, ILogger<MongoCrudProvider<FixtureDefinitionKey, FixtureDefinition>> logger) : base(db, logger)
 		{
 		}
 

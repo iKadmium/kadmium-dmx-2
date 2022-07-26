@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Kadmium_Dmx_Shared.Models;
 using MongoDB.Driver;
@@ -8,10 +9,13 @@ using Webapi.Models;
 
 namespace Webapi.Services
 {
-	public class MidiMapProvider : MongoCrudProvider<MidiMapKey, MidiMap>
+	public class MidiMapProvider : MongoCrudProvider<MidiMapKey, MidiMap>, IMidiMapProvider
 	{
-		public MidiMapProvider(IMongoDatabase db) : base(db)
+		private IMqttConnectionProvider Mqtt { get; }
+
+		public MidiMapProvider(IMongoDatabase db, IMqttConnectionProvider mqtt, ILogger<MongoCrudProvider<MidiMapKey, MidiMap>> logger) : base(db, logger)
 		{
+			Mqtt = mqtt;
 		}
 
 		protected override ProjectionDefinition<MidiMap> KeyProjection => Builders<MidiMap>
@@ -31,6 +35,19 @@ namespace Webapi.Services
 		protected override IOrderedFindFluent<MidiMap, MidiMap> Sort(IFindFluent<MidiMap, MidiMap> find)
 		{
 			return find.SortBy(x => x.Name);
+		}
+
+		public async Task Activate(string id)
+		{
+			try
+			{
+				var map = await Read(id);
+				await Mqtt.PublishAsync("/midimap/load", JsonSerializer.SerializeToUtf8Bytes(map));
+			}
+			catch (Exception e)
+			{
+				Logger.LogError($"Failed to activate MIDI Map {id}", e);
+			}
 		}
 	}
 }
