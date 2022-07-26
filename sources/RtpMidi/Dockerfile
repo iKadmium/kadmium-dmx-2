@@ -4,14 +4,15 @@ WORKDIR /app
 
 COPY ./sources/RtpMidi/ *.sln ./sources/RtpMidi/
 COPY ./sources/RtpMidi/RtpMidiSource/*.csproj ./sources/RtpMidi/RtpMidiSource/
-COPY ./sources/Shared/*.csproj ./Shared/
+COPY ./shared/*.csproj ./shared/
 
-WORKDIR ./sources/Shared/
+WORKDIR ./sources/RtpMidi/
 
 RUN dotnet restore
 
 # Copy everything else and build
-COPY ./sources/RtpMidi/RtpMidiSource/ ./sources/RtpMidi/RtpMidiSource/
+COPY ./sources/RtpMidi/RtpMidiSource/ ./RtpMidiSource/
+COPY ./shared/ ../../shared/
 RUN dotnet publish -c Release -o dist
 
 # Build runtime image
@@ -25,5 +26,5 @@ EXPOSE 5351/udp
 EXPOSE 5353/udp
 
 WORKDIR /app
-COPY --from=build-env /app/dist .
+COPY --from=build-env /app/sources/RtpMidi/dist .
 ENTRYPOINT ["dotnet", "RtpMidiSource.dll"]
