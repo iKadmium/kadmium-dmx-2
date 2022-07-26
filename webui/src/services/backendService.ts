@@ -1,15 +1,67 @@
 /// <reference types="vite/client" />
 
-export const getServiceUri = (path: string) => {
-	let apiRoot: URL;
-	if (import.meta.env.VITE_API_ROOT) {
-		apiRoot = new URL(import.meta.env.VITE_API_ROOT);
+export abstract class BackendService<TKey, TObject> {
+	protected apiRoot: Promise<URL>;
+
+	constructor(apiRoot: Promise<URL>) {
+		this.apiRoot = apiRoot;
 	}
-	else if (import.meta.env.DEV) {
-		apiRoot = new URL("/api/", 'http://localhost:5185');
+
+	abstract getBaseUri(): Promise<URL>;
+
+	public async create(obj: TObject): Promise<TObject> {
+		const uri = await this.getBaseUri();
+		const result = await fetch(
+			uri,
+			{
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				method: 'POST',
+				body: JSON.stringify(obj),
+			}
+		);
+		const json = await result.json() as TObject;
+		return json;
 	}
-	else {
-		apiRoot = new URL("/api/", window.location.toString());
+
+	public async readKeys() {
+		const uri = new URL(await this.getBaseUri());
+		const result = await fetch(uri);
+		const json = await result.json() as TKey[];
+		return json;
 	}
-	return new URL(path, apiRoot);
+
+	public async read(id: string) {
+		const uri = new URL(id, await this.getBaseUri());
+		const result = await fetch(uri);
+		const json = await result.json() as TObject;
+		return json;
+	}
+
+	public async update(id: string, obj: TObject): Promise<TObject> {
+		const uri = new URL(id, await this.getBaseUri());
+		const result = await fetch(
+			uri,
+			{
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				method: 'POST',
+				body: JSON.stringify(obj),
+			}
+		);
+		const json = await result.json() as TObject;
+		return json;
+	}
+
+	public async delete(id: string): Promise<void> {
+		const uri = new URL(id, await this.getBaseUri());
+		await fetch(
+			uri,
+			{
+				method: 'DELETE'
+			}
+		);
+	}
 }

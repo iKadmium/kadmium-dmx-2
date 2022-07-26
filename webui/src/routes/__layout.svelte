@@ -3,16 +3,21 @@
 	//import '../app.css';
 	//import { Styles } from 'sveltestrap';
 	import '../bootstrap.css';
-
+	import BackendContext from '../context/BackendContext.svelte';
+	import EnvironmentContext from '../context/EnvironmentContext.svelte';
 	import MqttContext from '../context/MqttContext.svelte';
 </script>
 
 <Header />
 
 <main>
-	<MqttContext>
-		<slot />
-	</MqttContext>
+	<EnvironmentContext>
+		<MqttContext>
+			<BackendContext>
+				<slot />
+			</BackendContext>
+		</MqttContext>
+	</EnvironmentContext>
 </main>
 
 <!-- <footer>

@@ -1,16 +1,12 @@
-<script type="ts">
+<script type="ts" async>
 	import { page } from '$app/stores';
 	import { Accordion, Button, Col, Form, FormGroup, Input, Row } from 'sveltestrap';
 
-	import { onMount } from 'svelte';
-
+	import { goto } from '$app/navigation';
+	import { getContext } from 'svelte';
 	import AccordionItemWithDeleteButton from '../../../components/AccordionItemWithDeleteButton.svelte';
+	import { BackendContextKey, type IBackendContext } from '../../../context/BackendContext.svelte';
 	import type { IFixtureDefinition, IMovementAxis } from '../../../models/fixtureDefinition';
-	import {
-		addFixtureDefinition,
-		getFixtureDefition,
-		updateFixtureDefinition
-	} from '../../../services/fixtureDefinitionService';
 	import {
 		deserialize,
 		serialize,
@@ -19,8 +15,8 @@
 		type IEditorMovementAxisEntry,
 		type IEditorPersonalityEntry
 	} from './editorTypes';
-	import { goto } from '$app/navigation';
 
+	const { fixtureDefinitionService } = getContext<IBackendContext>(BackendContextKey);
 	let definitionPromise = new Promise<IFixtureDefinition>(() => {});
 	let definition: IEditorFixtureDefinition;
 
@@ -29,9 +25,9 @@
 	const onSubmit = async () => {
 		const serialized = serialize(definition);
 		if (definition.id) {
-			await updateFixtureDefinition(id, serialized);
+			await fixtureDefinitionService.update(id, serialized);
 		} else {
-			await addFixtureDefinition(serialized);
+			await fixtureDefinitionService.create(serialized);
 		}
 		goto('/fixture-definition');
 	};
@@ -99,20 +95,18 @@
 		deleteItem(personality.personality, channel);
 	};
 
-	onMount(async () => {
-		if (id !== 'new') {
-			definitionPromise = getFixtureDefition(id);
-		} else {
-			const newDef: IFixtureDefinition = {
-				manufacturer: '',
-				model: '',
-				movementAxis: {},
-				personalities: {}
-			};
-			definitionPromise = Promise.resolve(newDef);
-		}
-		definition = deserialize(await definitionPromise);
-	});
+	if (id !== 'new') {
+		definitionPromise = fixtureDefinitionService.read(id);
+	} else {
+		const newDef: IFixtureDefinition = {
+			manufacturer: '',
+			model: '',
+			movementAxis: {},
+			personalities: {}
+		};
+		definitionPromise = Promise.resolve(newDef);
+	}
+	definitionPromise.then((def) => (definition = deserialize(def)));
 </script>
 
 <svelte:head>

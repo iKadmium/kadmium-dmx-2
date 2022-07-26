@@ -8,7 +8,8 @@
 <script lang="ts">
 	import type { Client } from 'mqtt';
 	import * as mqtt from 'mqtt/dist/mqtt.min';
-	import { onDestroy, setContext, onMount } from 'svelte';
+	import { onDestroy, setContext, onMount, getContext } from 'svelte';
+	import { EnvironmentContextKey, type IEnvironmentContext } from './EnvironmentContext.svelte';
 
 	let client: Client;
 
@@ -18,8 +19,11 @@
 
 	setContext<IMqttContext>(MqttContextKey, contextValue);
 
-	onMount(() => {
-		client = mqtt.connect('ws://localhost:9001');
+	const apiRoot = getContext<IEnvironmentContext>(EnvironmentContextKey).getApiRoot();
+
+	onMount(async () => {
+		const mqttRoot = new URL(`ws://${(await apiRoot).hostname}:9001`);
+		client = mqtt.connect(mqttRoot.toString());
 	});
 
 	onDestroy(() => {

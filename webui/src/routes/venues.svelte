@@ -1,30 +1,27 @@
 <script lang="ts">
-	import { getContext, onMount } from 'svelte';
+	import { getContext } from 'svelte';
 	import GoDiffAdded from 'svelte-icons/go/GoDiffAdded.svelte';
 	import GoRocket from 'svelte-icons/go/GoRocket.svelte';
 	import GoTrashcan from 'svelte-icons/go/GoTrashcan.svelte';
 	import { Button } from 'sveltestrap';
 	import IconContainer from '../components/IconContainer.svelte';
 	import Table from '../components/Table.svelte';
+	import { BackendContextKey, type IBackendContext } from '../context/BackendContext.svelte';
 	import { MqttContextKey, type IMqttContext } from '../context/MqttContext.svelte';
 	import type { IVenueKey } from '../models/venue';
-	import { deleteVenue, getVenueKeys, getVenuePayload } from '../services/venueService';
 
-	let venuesPromise = new Promise<IVenueKey[]>(() => {});
+	const { venueService } = getContext<IBackendContext>(BackendContextKey);
+	let venuesPromise = venueService.readKeys();
 	const mqttContext = getContext<IMqttContext>(MqttContextKey);
 
-	onMount(() => {
-		venuesPromise = getVenueKeys();
-	});
-
 	const handleLaunchClick = async (venueKey: IVenueKey) => {
-		const venuePayload = await getVenuePayload(venueKey.id);
+		const venuePayload = await venueService.getVenuePayload(venueKey.id);
 		console.log(venuePayload);
 		mqttContext.getMqtt().publish('/venue/load', JSON.stringify(venuePayload), { retain: true });
 	};
 
 	const handleDeleteClick = async (venueKey: IVenueKey) => {
-		await deleteVenue(venueKey.id);
+		await venueService.delete(venueKey.id);
 	};
 </script>
 

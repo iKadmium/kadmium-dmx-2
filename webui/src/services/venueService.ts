@@ -1,35 +1,18 @@
 import type { IVenue, IVenueKey } from "../models/venue";
-import { getServiceUri } from "./backendService"
+import type { IVenuePayload } from "../models/venuePayload";
+import { BackendService } from "./backendService";
 
-const getBaseUri = () => getServiceUri('venue/');
+export class VenueService extends BackendService<IVenueKey, IVenue>
+{
+	async getBaseUri(): Promise<URL> {
+		return new URL('venue/', await this.apiRoot);
+	}
 
-export const getVenueKeys = async () => {
-	const uri = getBaseUri();
-	const result = await fetch(uri);
-	const json = await result.json() as IVenueKey[];
-	return json;
-}
+	public async getVenuePayload(id: string): Promise<IVenuePayload> {
+		const uri = new URL(`${id}/payload`, await this.getBaseUri());
+		const result = await fetch(uri);
+		const json = await result.json() as IVenuePayload;
+		return json;
+	}
 
-export const getVenue = async (id: string) => {
-	const uri = new URL(id, getBaseUri());
-	const result = await fetch(uri);
-	const json = await result.json() as IVenue;
-	return json;
-}
-
-export const getVenuePayload = async (id: string) => {
-	const uri = new URL(`${id}/payload`, getBaseUri());
-	const result = await fetch(uri);
-	const json = await result.json() as IVenue;
-	return json;
-}
-
-export const deleteVenue = async (id: string) => {
-	const uri = new URL(`${id}/payload`, getBaseUri());
-	await fetch(
-		uri,
-		{
-			method: 'DELETE'
-		}
-	);
 }
