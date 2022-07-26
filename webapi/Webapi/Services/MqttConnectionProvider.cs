@@ -45,7 +45,7 @@ namespace Webapi.Services
 			var message = new MqttApplicationMessageBuilder()
 				.WithTopic(topic)
 				.WithPayload(payload.ToArray())
-				.WithRetainFlag(true)
+				.WithRetainFlag(retain)
 				.Build();
 
 			await Client.EnqueueAsync(message);

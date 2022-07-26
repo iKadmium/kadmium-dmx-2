@@ -1,7 +1,10 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
+	import type { OnMessageCallback } from 'mqtt/dist/mqtt.min';
+
+	import { getContext, onDestroy } from 'svelte';
 	import { MqttContextKey, type IMqttContext } from '../context/MqttContext.svelte';
 	import type { IVenue } from '../models/venue';
+	import type { IVenuePayload } from '../models/venuePayload';
 	import { loadedGroups } from '../stores/loadedGroups';
 	import { loadedVenue } from '../stores/loadedVenueStore';
 	const { getMqtt } = getContext<IMqttContext>(MqttContextKey);
@@ -13,14 +16,20 @@
 	loadedVenue.subscribe((value) => (activeVenue = value));
 	loadedGroups.subscribe((value) => (activeGroups = value));
 
-	client.on('message', (topic, payload) => {
+	const listener = (topic: string, payload: OnMessageCallback) => {
 		if (topic === '/venue/load') {
-			const venuePayload = JSON.parse(payload.toString());
+			const venuePayload = JSON.parse(payload.toString()) as IVenuePayload;
 			loadedVenue.set(venuePayload.venue);
 			loadedGroups.set(venuePayload.groups);
 		}
-	});
+	};
+	client.on('message', listener);
 	client.subscribe('/venue/load');
+
+	onDestroy(() => {
+		client.unsubscribe('/venue/load');
+		client.removeListener('message', listener);
+	});
 </script>
 
 <svelte:head>

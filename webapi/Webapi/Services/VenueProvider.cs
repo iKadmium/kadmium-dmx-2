@@ -51,7 +51,8 @@ namespace Webapi.Services
 				var groups = instances.SelectMany(x => x.Groups).Distinct();
 
 				var payload = new VenuePayload(groups, definitions, venue);
-				await Mqtt.PublishAsync("/venue/load", JsonSerializer.SerializeToUtf8Bytes(payload));
+				var serialized = JsonSerializer.SerializeToUtf8Bytes(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+				await Mqtt.PublishAsync("/venue/load", serialized, true);
 			}
 			catch (Exception e)
 			{

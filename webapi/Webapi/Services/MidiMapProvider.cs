@@ -41,8 +41,9 @@ namespace Webapi.Services
 		{
 			try
 			{
-				var map = await Read(id);
-				await Mqtt.PublishAsync("/midimap/load", JsonSerializer.SerializeToUtf8Bytes(map));
+				var payload = await Read(id);
+				var serialized = JsonSerializer.SerializeToUtf8Bytes(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+				await Mqtt.PublishAsync("/midimap/load", serialized);
 			}
 			catch (Exception e)
 			{

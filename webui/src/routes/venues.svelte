@@ -7,17 +7,13 @@
 	import IconContainer from '../components/IconContainer.svelte';
 	import Table from '../components/Table.svelte';
 	import { BackendContextKey, type IBackendContext } from '../context/BackendContext.svelte';
-	import { MqttContextKey, type IMqttContext } from '../context/MqttContext.svelte';
 	import type { IVenueKey } from '../models/venue';
 
 	const { venueService } = getContext<IBackendContext>(BackendContextKey);
 	let venuesPromise = venueService.readKeys();
-	const mqttContext = getContext<IMqttContext>(MqttContextKey);
 
 	const handleLaunchClick = async (venueKey: IVenueKey) => {
-		const venuePayload = await venueService.getVenuePayload(venueKey.id);
-		console.log(venuePayload);
-		mqttContext.getMqtt().publish('/venue/load', JSON.stringify(venuePayload), { retain: true });
+		await venueService.activate(venueKey.id);
 	};
 
 	const handleDeleteClick = async (venueKey: IVenueKey) => {
