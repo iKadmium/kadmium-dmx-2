@@ -12,6 +12,7 @@ namespace RtpMidiSource.Services.Mqtt
 	public class MqttConnectionProvider : IMqttSender, IDisposable
 	{
 		private IManagedMqttClient Client { get; }
+		private Dictionary<string, Func<MqttApplicationMessageReceivedEventArgs, Task>> Subscriptions { get; } = new();
 
 		public bool IsConnected => Client.IsStarted;
 
@@ -22,7 +23,7 @@ namespace RtpMidiSource.Services.Mqtt
 
 		public void Dispose()
 		{
-			throw new NotImplementedException();
+			Client.Dispose();
 		}
 
 		public async Task Begin()
@@ -47,6 +48,13 @@ namespace RtpMidiSource.Services.Mqtt
 				.Build();
 
 			await Client.EnqueueAsync(message);
+		}
+
+		public async Task SubscribeAsync(string topic, Func<MqttApplicationMessageReceivedEventArgs, Task> handler)
+		{
+			Subscriptions.Add(topic, handler);
+			await Client.SubscribeAsync(topic);
+			Client.ApplicationMessageReceivedAsync += handler;
 		}
 	}
 }

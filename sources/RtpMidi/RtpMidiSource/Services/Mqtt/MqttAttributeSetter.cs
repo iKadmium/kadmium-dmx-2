@@ -39,11 +39,6 @@ namespace RtpMidiSource.Services.Mqtt
 			}, null, RENDER_TIME_MS, RENDER_TIME_MS);
 		}
 
-		public void SetAttributeCached(string group, string attribute, float value)
-		{
-			ValueCache.SetValue(group, attribute, value);
-		}
-
 		private async Task SetAttributeAsync(string group, string attribute, Memory<byte> value)
 		{
 			var topic = $"/group/{group}/{attribute}";

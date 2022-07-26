@@ -7,29 +7,25 @@ using KadmiumRtpMidi;
 using KadmiumRtpMidi.Packets.MidiCommands;
 using Microsoft.Extensions.Logging;
 using RtpMidiSource.Services;
-using RtpMidiSource.Services.Mapping;
 using RtpMidiSource.Services.Mqtt;
 using RtpMidiSource.Services.RtpMidi;
+using RtpMidiSource.Services.ValueCache;
 
 namespace RtpMidiSource
 {
 	public class RtpMidiSource
 	{
-		private IAttributeMapProvider AttributeMapProvider { get; }
-		private IGroupMapProvider GroupMapProvider { get; }
 		private ISessionProvider SessionProvider { get; }
-		private IAttributeSetter AttributeSetter { get; }
+		private IValueCache ValueCache { get; }
 		private int PacketsSinceLastRender { get; set; } = 0;
 		private ILogger<RtpMidiSource> Logger { get; }
 		private Timer FeedbackTimer { get; }
 		private Session? Session { get; set; }
 
-		public RtpMidiSource(IAttributeMapProvider attributeMapProvider, IGroupMapProvider groupMapProvider, ISessionProvider sessionProvider, IAttributeSetter attributeSetter, ILogger<RtpMidiSource> logger)
+		public RtpMidiSource(ISessionProvider sessionProvider, IValueCache valueCache, ILogger<RtpMidiSource> logger)
 		{
-			AttributeMapProvider = attributeMapProvider;
-			GroupMapProvider = groupMapProvider;
 			SessionProvider = sessionProvider;
-			AttributeSetter = attributeSetter;
+			ValueCache = valueCache;
 			Logger = logger;
 
 			FeedbackTimer = new Timer((state) =>
@@ -41,8 +37,6 @@ namespace RtpMidiSource
 
 		public async Task Listen(CancellationToken token)
 		{
-			var attributeMap = await AttributeMapProvider.GetAttributeMapAsync();
-			var groupMap = await GroupMapProvider.GetGroupMapAsync();
 			Session = await SessionProvider.GetSessionAsync();
 
 			Session.OnPacketReceived += async (_, receivedEvent) =>
@@ -55,16 +49,7 @@ namespace RtpMidiSource
 				{
 					if (command is ControlChange cc)
 					{
-						if (attributeMap.ContainsKey(cc.CcNumber) && groupMap.ContainsKey(cc.Channel))
-						{
-							var attribute = attributeMap[cc.CcNumber];
-							var group = groupMap[cc.Channel];
-							var value = cc.Value;
-
-							var adjustedValue = attribute.GetAdjustedValue(cc.Value);
-
-							AttributeSetter.SetAttributeCached(group, attribute.Name, adjustedValue);
-						}
+						ValueCache.SetValue(cc.Channel, cc.CcNumber, cc.Value);
 					}
 				}
 

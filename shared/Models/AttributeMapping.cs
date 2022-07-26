@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using RtpMidiSource.Util;
 
-namespace RtpMidiSource.Services.Mapping
+namespace Kadmium_Dmx_Shared.Models
 {
-	public class AttributeMapping
+	public record AttributeMapping
 	{
 		private const byte MidiMin = (byte)0;
 		private const byte MidiMax = (byte)127;

@@ -15,4 +15,8 @@
     <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.0.2.221" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\Shared.csproj" />
+  </ItemGroup>
+
 </Project>

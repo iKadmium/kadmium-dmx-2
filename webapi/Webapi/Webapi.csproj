@@ -9,6 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="6.0.7" />
     <PackageReference Include="MongoDB.Driver" Version="2.16.1" />
+    <PackageReference Include="MqttNet" Version="4.0.2.221" />
+    <PackageReference Include="MqttNet.Extensions.ManagedClient" Version="4.0.2.221" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
   </ItemGroup>
 

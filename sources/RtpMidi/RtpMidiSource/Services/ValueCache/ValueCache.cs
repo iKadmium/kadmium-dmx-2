@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using RtpMidiSource.Services.Mapping;
+using Kadmium_Dmx_Shared.Models;
+using Microsoft.Extensions.Logging;
+using RtpMidiSource.Services.Mqtt;
 using RtpMidiSource.Util;
 
 namespace RtpMidiSource.Services.ValueCache
@@ -10,25 +13,31 @@ namespace RtpMidiSource.Services.ValueCache
 	public class ValueCache : IValueCache
 	{
 		private Dictionary<string, Dictionary<string, AttributeValue>> Values { get; set; } = new Dictionary<string, Dictionary<string, AttributeValue>>();
-		private IAttributeMapProvider AttributeMapProvider { get; }
-		private IGroupMapProvider GroupMapProvider { get; }
+		private MidiMap MidiMap { get; set; } = new MidiMap("No map", new Dictionary<byte, string>(), new Dictionary<byte, AttributeMapping>());
 
-		public ValueCache(IAttributeMapProvider attributeMapProvider, IGroupMapProvider groupMapProvider)
+		public ValueCache(IMqttSender mqttConnectionProvider, ILogger<ValueCache> logger)
 		{
-			AttributeMapProvider = attributeMapProvider;
-			GroupMapProvider = groupMapProvider;
+			mqttConnectionProvider.SubscribeAsync("/midimap/load", async (message) =>
+			{
+				var map = JsonSerializer.Deserialize<MidiMap>(message.ApplicationMessage.Payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+				if (map != null)
+				{
+					logger.LogInformation("Loading midimap");
+					MidiMap = map;
+					await message.AcknowledgeAsync(CancellationToken.None);
+				}
+			});
 		}
 
-		public async Task LoadAsync()
+		public void Load(MidiMap map)
 		{
-			var attributeMap = await AttributeMapProvider.GetAttributeMapAsync();
-			var groupMap = await GroupMapProvider.GetGroupMapAsync();
+			MidiMap = map;
 
-			var values = groupMap.Values.ToDictionary(
+			var values = map.ChannelGroups.Values.ToDictionary(
 				groupName => groupName,
-				groupName => attributeMap.Values.ToDictionary(
-					attributeName => attributeName.Name,
-					attributeName => new AttributeValue(groupName, attributeName.Name)
+				groupName => map.ChannelGroups.Values.ToDictionary(
+					attributeName => attributeName,
+					attributeName => new AttributeValue(groupName, attributeName)
 				)
 			);
 
@@ -62,7 +71,19 @@ namespace RtpMidiSource.Services.ValueCache
 
 		public void SetValue(string group, string attribute, float value)
 		{
-			var thing = Values[group][attribute].Value = value;
+			Values[group][attribute].Value = value;
+		}
+
+		public void SetValue(byte channel, byte ccNumber, byte value)
+		{
+			if (MidiMap.CcAttributes.ContainsKey(ccNumber) && MidiMap.ChannelGroups.ContainsKey(channel))
+			{
+				var attribute = MidiMap.CcAttributes[ccNumber];
+				var group = MidiMap.ChannelGroups[channel];
+				var adjustedValue = attribute.GetAdjustedValue(value);
+
+				Values[group][attribute.Name].Value = adjustedValue;
+			}
 		}
 	}
 }

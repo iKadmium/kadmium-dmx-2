@@ -3,6 +3,9 @@ using Kadmium_Dmx_Shared.Models;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Options;
 using MongoDB.Driver;
+using MQTTnet.Client;
+using MQTTnet.Extensions.ManagedClient;
+using MQTTnet.Formatter;
 using Webapi.Models;
 using Webapi.Services;
 
@@ -29,6 +32,21 @@ namespace Kadmium_Dmx_Shared
 
 			builder.Services.AddSingleton<ICrudProvider<VenueKey, Venue>, VenueProvider>();
 			builder.Services.AddSingleton<IFixtureDefinitionProvider, FixtureDefinitionProvider>();
+			builder.Services.AddSingleton<ICrudProvider<MidiMapKey, MidiMap>, MidiMapProvider>();
+			builder.Services.AddSingleton<IDefaultsProvider, MongoDefaultsProvider>();
+			builder.Services.AddSingleton<IMqttConnectionProvider, MqttConnectionProvider>();
+
+			builder.Services.AddSingleton<ManagedMqttClientOptions>((serviceProvider) =>
+					{
+						return new ManagedMqttClientOptionsBuilder()
+						.WithAutoReconnectDelay(TimeSpan.FromSeconds(1))
+						.WithClientOptions(new MqttClientOptionsBuilder()
+							.WithTcpServer("mqtt")
+							.WithProtocolVersion(MqttProtocolVersion.V500)
+							.Build()
+						)
+						.Build();
+					});
 
 			IKadmiumDmxConfigurationProvider configProvider = new KadmiumDmxEnvironmentVariableConfigurationProvider();
 			builder.Services.AddSingleton<IKadmiumDmxConfigurationProvider>(configProvider);
@@ -63,7 +81,36 @@ namespace Kadmium_Dmx_Shared
 				spa.Options.SourcePath = "htdocs";
 			});
 
+			var defaultsProvider = app.Services.GetRequiredService<IDefaultsProvider>();
+			var defaults = await defaultsProvider.GetDefaults();
+			var mqtt = app.Services.GetRequiredService<IMqttConnectionProvider>();
+			await mqtt.Begin();
+
+			await LoadDefault<MidiMapKey, MidiMap>(defaults.MidiMapId, app, mqtt, "/midimap/load");
+			await LoadDefault<VenueKey, Venue>(defaults.VenueId, app, mqtt, "/venue/load");
+
 			await app.RunAsync();
+		}
+
+		private static async Task LoadDefault<TKey, TObject>(string? id, WebApplication app, IMqttConnectionProvider mqtt, string topic)
+			where TKey : IHasId
+			where TObject : IHasId
+		{
+			if (id != null)
+			{
+				try
+				{
+					var midiMapProvider = app.Services.GetRequiredService<ICrudProvider<TKey, TObject>>();
+					var midiMap = await midiMapProvider.Read(id);
+					var serialized = JsonSerializer.SerializeToUtf8Bytes(midiMap);
+					await mqtt.PublishAsync(topic, serialized, true);
+				}
+				catch (Exception e)
+				{
+					var logger = app.Services.GetRequiredService<ILogger<MongoDefaultsProvider>>();
+					logger.LogError(e, "Could not load default for " + typeof(TObject).Name);
+				}
+			}
 		}
 	}
 }

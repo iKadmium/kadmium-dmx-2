@@ -10,5 +10,6 @@ namespace RtpMidiSource.Services.Mqtt
 	{
 		Task Begin();
 		Task PublishAsync(string topic, Memory<byte> payload);
+		Task SubscribeAsync(string topic, Func<MqttApplicationMessageReceivedEventArgs, Task> handler);
 	}
 }

@@ -7,7 +7,6 @@ namespace RtpMidiSource.Services.Mqtt
 {
 	public interface IAttributeSetter
 	{
-		void SetAttributeCached(string group, string attribute, float value);
 		Task BeginAsync();
 	}
 }

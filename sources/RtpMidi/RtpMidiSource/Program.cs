@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RtpMidiSource.Services;
-using RtpMidiSource.Services.Mapping;
 using RtpMidiSource.Services.Mqtt;
 using RtpMidiSource.Services.RtpMidi;
 using RtpMidiSource.Services.ValueCache;
@@ -19,9 +18,6 @@ namespace RtpMidiSource
 				.ConfigureAppConfiguration((configure) => { })
 				.ConfigureServices((hostContext, services) =>
 				{
-					services.AddSingleton<IOptionsProvider, OptionsProvider>();
-					services.AddSingleton<IAttributeMapProvider, AttributeMapProvider>();
-					services.AddSingleton<IGroupMapProvider, GroupMapProvider>();
 					services.AddSingleton<ISessionProvider, SessionProvider>();
 					services.AddSingleton<IMqttSender, MqttConnectionProvider>();
 					services.AddSingleton<IAttributeSetter, MqttAttributeSetter>();
@@ -34,9 +30,6 @@ namespace RtpMidiSource
 			});
 
 			var host = builder.Build();
-
-			var valueCache = host.Services.GetRequiredService<IValueCache>();
-			await valueCache.LoadAsync();
 
 			var setter = host.Services.GetRequiredService<IAttributeSetter>();
 			await setter.BeginAsync();
