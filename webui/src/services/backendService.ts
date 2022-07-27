@@ -47,7 +47,7 @@ export abstract class BackendService<TKey, TObject> {
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				method: 'POST',
+				method: 'PUT',
 				body: JSON.stringify(obj),
 			}
 		);

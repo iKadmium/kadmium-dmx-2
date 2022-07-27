@@ -160,7 +160,7 @@
 											<Input
 												value={channel.address}
 												type="number"
-												on:change={(e) => (channel.address = e.currentTarget?.value)}
+												on:change={(e) => (channel.address = Number(e.currentTarget?.value))}
 											/>
 										</FormGroup>
 									</Col>

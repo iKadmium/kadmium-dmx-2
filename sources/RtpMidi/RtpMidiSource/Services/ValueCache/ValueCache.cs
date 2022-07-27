@@ -23,7 +23,7 @@ namespace RtpMidiSource.Services.ValueCache
 				if (map != null)
 				{
 					logger.LogInformation("Loading midimap");
-					MidiMap = map;
+					Load(map);
 					await message.AcknowledgeAsync(CancellationToken.None);
 				}
 			});
@@ -33,11 +33,11 @@ namespace RtpMidiSource.Services.ValueCache
 		{
 			MidiMap = map;
 
-			var values = map.ChannelGroups.Values.ToDictionary(
-				groupName => groupName,
-				groupName => map.ChannelGroups.Values.ToDictionary(
-					attributeName => attributeName,
-					attributeName => new AttributeValue(groupName, attributeName)
+			var values = map.ChannelGroups.ToDictionary(
+				channelGroup => channelGroup.Value,
+				channelGroup => map.CcAttributes.ToDictionary(
+					ccAttribute => ccAttribute.Value.Name,
+					ccAttribute => new AttributeValue(channelGroup.Value, ccAttribute.Value.Name)
 				)
 			);
 
@@ -67,11 +67,6 @@ namespace RtpMidiSource.Services.ValueCache
 					attribute.LastRenderedValue = attribute.Value;
 				}
 			}
-		}
-
-		public void SetValue(string group, string attribute, float value)
-		{
-			Values[group][attribute].Value = value;
 		}
 
 		public void SetValue(byte channel, byte ccNumber, byte value)
