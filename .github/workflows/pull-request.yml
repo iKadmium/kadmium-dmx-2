@@ -53,7 +53,7 @@ jobs:
         run: dotnet build --no-restore
         working-directory: ${{ matrix.workdir }}
       - name: Test
-        run: dotnet test --no-build --verbosity normal --settings coverlet.runsettings
+        run: dotnet test --no-build --verbosity normal --settings ${{ GITHUB_WORKSPACE }}coverlet.runsettings
         working-directory: ${{ matrix.workdir }}
       - name: Check coverage
         uses: codecov/codecov-action@v1
