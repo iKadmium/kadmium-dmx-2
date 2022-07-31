@@ -81,5 +81,5 @@
 	// "postCreateCommand": "dotnet restore",
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
-	"postCreateCommand": "dotnet dev-certs https"
+	"postCreateCommand": "dotnet dev-certs https && sudo cp .devcontainer/mosquitto.conf mosquitto-conf"
 }
