@@ -6,6 +6,8 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
+      args:
+        - "NODE_VERSION:lts/*"
       # [Optional] You can use build args to set options. e.g. 'VARIANT' below affects the image in the Dockerfile
       # args: 
       #   VARIANT: bullseye
@@ -13,6 +15,7 @@ services:
     volumes:
       # This is where VS Code should expect to find your project's source code and the value of "workspaceFolder" in .devcontainer/devcontainer.json
       - ..:/workspace:cached
+      - mosquitto-conf:/workspaces/kadmium-dmx-2/mosquitto-conf:cached
 
       # Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-from-docker-compose for details.
       # - /var/run/docker.sock:/var/run/docker.sock 
@@ -35,7 +38,7 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
     # Uncomment the next line to use a non-root user for all processes - See https://aka.ms/vscode-remote/containers/non-root for details.
-    # user: vscode
+    user: vscode
 
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
     # cap_add:
@@ -51,7 +54,7 @@ services:
     networks:
       - kadmium-dmx
     volumes:
-      - kadmium-dmx-data:/data/db
+      - kadmium-dmx-data:/data/db:cached
 
   mqtt:
     image: eclipse-mosquitto:latest
@@ -60,12 +63,13 @@ services:
     ports:
       - 9001:9001
     volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:cached
+      - mosquitto-conf:/mosquitto/config:cached
 
     # As in the "app" service, use "forwardPorts" in **devcontainer.json** to forward an app port locally.
 
 volumes:
   kadmium-dmx-data:
+  mosquitto-conf:
 
 networks:
   kadmium-dmx:
