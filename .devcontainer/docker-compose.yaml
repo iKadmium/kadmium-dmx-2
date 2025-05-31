@@ -23,11 +23,11 @@ services:
       - kadmium-dmx
     ports:
       - 1900:1900/udp
-      - 5023:5023/udp
-      - 5024:5024/udp
-      - 5350:5350/udp
-      - 5351:5351/udp
-      - 5353:5353/udp
+      # - 5023:5023/udp
+      # - 5024:5024/udp
+      # - 5350:5350/udp
+      # - 5351:5351/udp
+      # - 5353:5353/udp
 
     # Overrides default command so things don't shut down after the process ends.
     command: /bin/sh -c "while sleep 1000; do :; done"  

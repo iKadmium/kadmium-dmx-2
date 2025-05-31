@@ -16,6 +16,11 @@
 	"dockerComposeFile": "docker-compose.yaml",
 	"service": "app",
 	"workspaceFolder": "/workspace",
+	"features": {
+		"ghcr.io/devcontainers/features/rust:1": {},
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+		"ghcr.io/devcontainers/features/node:1": {}
+	},
 	// "runArgs": [
 	// 	"--init",
 	// 	"-p",
@@ -48,12 +53,8 @@
 	},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"appPort": [
-		"1900:1900/udp",
-		"5023:5023/udp",
-		"5024:5024/udp",
-		"5350:5350/udp",
-		"5351:5351/udp",
-		"5353:5353/udp"
+		//"1900:1900/udp",
+		//"5353:5353/udp"
 	],
 	// [Optional] To reuse of your local HTTPS dev cert:
 	//
@@ -81,5 +82,5 @@
 	// "postCreateCommand": "dotnet restore",
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
-	"postCreateCommand": "dotnet dev-certs https && sudo cp .devcontainer/mosquitto.conf mosquitto-conf"
+	"postCreateCommand": "dotnet dev-certs https && sudo cp .devcontainer/mosquitto.conf mosquitto-conf && sudo apt update && sudo apt install -y pkg-config"
 }

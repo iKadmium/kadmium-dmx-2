@@ -30,6 +30,7 @@
 		}
 	],
 	"settings": {
-		"typescript.preferences.importModuleSpecifier": "relative"
+		"typescript.preferences.importModuleSpecifier": "relative",
+		"dotnet.defaultSolution": "disable"
 	}
 }

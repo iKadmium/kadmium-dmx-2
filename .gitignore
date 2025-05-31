@@ -16,12 +16,7 @@ dist/
 webui/node_modules
 webui/.pnp
 .pnp.js
-
-# testing
-webui/coverage
-
-# production
-webui/build
+.pnpm-store/
 
 # misc
 .DS_Store
