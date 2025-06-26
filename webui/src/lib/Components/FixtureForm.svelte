@@ -14,7 +14,7 @@
 		| 'color-macro'
 		| 'shutter'
 		| 'other';
-	type ShutterOption = 'strobe' | 'dimmer';
+	type ShutterFunction = 'strobe' | 'dimmer';
 
 	type ColorMacro = {
 		color: string;
@@ -27,7 +27,7 @@
 		name?: string;
 		type: ChannelType;
 		colorMacros: ColorMacro[];
-		shutterOptions: { name: ShutterOption; min: number; max: number }[];
+		shutterFunctions: { name: ShutterFunction; min: number; max: number }[];
 	};
 
 	type Personality = {
@@ -62,7 +62,7 @@
 								max: 255
 							}
 						],
-						shutterOptions: [
+						shutterFunctions: [
 							{
 								name: 'dimmer',
 								min: 0,
@@ -91,7 +91,7 @@
 							max: 255
 						}
 					],
-					shutterOptions: [
+					shutterFunctions: [
 						{
 							name: 'dimmer',
 							min: 0,
@@ -101,6 +101,14 @@
 				}
 			]
 		});
+	}
+
+	function removePersonality(index: number): void {
+		if (fixture.personalities.length > 1) {
+			fixture.personalities.splice(index, 1);
+		} else {
+			alert('At least one personality must remain.');
+		}
 	}
 
 	// Add a new channel to a personality
@@ -138,7 +146,7 @@
 			name: '',
 			type: nextType,
 			colorMacros: [],
-			shutterOptions: []
+			shutterFunctions: []
 		});
 	}
 
@@ -169,8 +177,8 @@
 	}
 
 	// Add a new shutter option to a channel
-	function addShutterOption(personalityIndex: number, channelIndex: number): void {
-		fixture.personalities[personalityIndex].channels[channelIndex].shutterOptions.push({
+	function addShutterFunction(personalityIndex: number, channelIndex: number): void {
+		fixture.personalities[personalityIndex].channels[channelIndex].shutterFunctions.push({
 			name: 'strobe',
 			min: 0,
 			max: 255
@@ -178,20 +186,20 @@
 	}
 
 	// Remove a shutter option from a channel
-	function removeShutterOption(
+	function removeShutterFunction(
 		personalityIndex: number,
 		channelIndex: number,
 		optionIndex: number
 	): void {
-		fixture.personalities[personalityIndex].channels[channelIndex].shutterOptions.splice(
+		fixture.personalities[personalityIndex].channels[channelIndex].shutterFunctions.splice(
 			optionIndex,
 			1
 		);
 	}
 
 	function handleChannelTypeChange(channel: Channel): void {
-		if (channel.type === 'shutter' && channel.shutterOptions.length === 0) {
-			channel.shutterOptions.push({
+		if (channel.type === 'shutter' && channel.shutterFunctions.length === 0) {
+			channel.shutterFunctions.push({
 				name: 'strobe',
 				min: 0,
 				max: 255
@@ -249,9 +257,13 @@
 
 	<!-- Update the personalities section to use Tabs correctly -->
 	<h3>Personalities</h3>
-	<TabStrip>
+	<TabStrip showAddButton={true} onAddTab={addPersonality}>
 		{#each fixture.personalities as personality, pIndex}
-			<Tab label={personality.name}>
+			<Tab
+				label={personality.name}
+				closable={fixture.personalities.length > 1}
+				onClosed={() => removePersonality(pIndex)}
+			>
 				{#if !autoNamePersonalities}
 					<label>
 						Name:
@@ -328,14 +340,14 @@
 						{/if}
 
 						{#if channel.type === 'shutter'}
-							<h5>Shutter Options</h5>
-							{#each channel.shutterOptions as option, oIndex}
+							<h5>Shutter Functions</h5>
+							{#each channel.shutterFunctions as shutterFunction, oIndex}
 								<fieldset>
-									<legend>Shutter Option {oIndex + 1}</legend>
+									<legend>Shutter Function {oIndex + 1}</legend>
 
 									<label>
 										Name:
-										<select bind:value={option.name}>
+										<select bind:value={shutterFunction.name}>
 											<option value="strobe">Strobe</option>
 											<option value="dimmer">Dimmer</option>
 										</select>
@@ -343,18 +355,18 @@
 
 									<label>
 										Min Value:
-										<input type="number" min="0" max="255" bind:value={option.min} />
+										<input type="number" min="0" max="255" bind:value={shutterFunction.min} />
 									</label>
 
 									<label>
 										Max Value:
-										<input type="number" min="0" max="255" bind:value={option.max} />
+										<input type="number" min="0" max="255" bind:value={shutterFunction.max} />
 									</label>
 
-									{#if channel.shutterOptions.length > 1}
+									{#if channel.shutterFunctions.length > 1}
 										<button
 											type="button"
-											onclick={() => removeShutterOption(pIndex, cIndex, oIndex)}
+											onclick={() => removeShutterFunction(pIndex, cIndex, oIndex)}
 										>
 											Remove Shutter Option
 										</button>
@@ -362,7 +374,7 @@
 								</fieldset>
 							{/each}
 
-							<button type="button" onclick={() => addShutterOption(pIndex, cIndex)}
+							<button type="button" onclick={() => addShutterFunction(pIndex, cIndex)}
 								>Add Shutter Option</button
 							>
 						{/if}
