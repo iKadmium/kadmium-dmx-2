@@ -31,14 +31,14 @@ async fn main() {
     let initial_settings = match Settings::load(()).await {
         Ok(s) => s,
         Err(e) => {
-            eprintln!("Failed to load settings: {}. Using default settings.", e);
+            eprintln!("Failed to load settings: {e}. Using default settings.");
             Settings::default()
         }
     };
     let settings_state = Arc::new(RwLock::new(initial_settings));
 
     // Create a service to serve the index.html file
-    let index_html_service = ServeFile::new(format!("{}/index.html", SPA_DIR));
+    let index_html_service = ServeFile::new(format!("{SPA_DIR}/index.html"));
 
     // Create the static file service with a fallback to index.html
     let static_service = get_service(ServeDir::new(SPA_DIR).fallback(index_html_service));

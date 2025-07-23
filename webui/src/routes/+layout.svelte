@@ -4,16 +4,11 @@
 	let { children } = $props();
 </script>
 
-<div class="main-layout">
-	{@render children()}
+<div class="grid h-screen grid-rows-[auto_1fr_auto]">
+	<main class="space-y-4 p-4">
+		{@render children()}
+	</main>
 </div>
 
 <style>
-	.main-layout {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		width: 100%;
-		max-width: 1200px;
-	}
 </style>
