@@ -1,38 +1,17 @@
+<script lang="ts" module>
+	export interface FixtureFormProps {
+		fixture: Fixture;
+		onSubmit: (fixture: Fixture) => void;
+	}
+</script>
+
 <script lang="ts">
 	import type { Fixture, Personality } from '../types/fixture.js';
 	import PersonalityEditor from './PersonalityEditor.svelte';
 
-	let fixture = $state<Fixture>({
-		manufacturer: '',
-		model: '',
-		type: 'LED',
-		personalities: [
-			{
-				name: '1ch',
-				channels: [
-					{
-						number: 1,
-						type: 'shutter',
-						colorMacros: [
-							{
-								color: '#ffffff',
-								min: 0,
-								max: 255
-							}
-						],
-						shutterFunctions: [
-							{
-								name: 'dimmer',
-								min: 0,
-								max: 255
-							}
-						]
-					}
-				]
-			}
-		],
-		movementAxis: []
-	});
+	let { fixture: initialFixture, onSubmit }: FixtureFormProps = $props();
+
+	let fixture = $state<Fixture>(initialFixture);
 
 	let autoNamePersonalities = $state(true);
 	let activePersonalityIndex = $state(0);
@@ -53,9 +32,14 @@
 			});
 		}
 	});
+
+	function handleSubmit(event: Event): void {
+		event.preventDefault();
+		onSubmit(fixture);
+	}
 </script>
 
-<form class="mx-auto w-full max-w-xl space-y-4" onsubmit={(e) => e.preventDefault()}>
+<form class="mx-auto w-full max-w-xl space-y-4" onsubmit={handleSubmit}>
 	<h2 class="text-2xl">Lighting Fixture Definition</h2>
 
 	<label class="label">
