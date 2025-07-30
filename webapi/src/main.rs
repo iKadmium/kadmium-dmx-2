@@ -1,24 +1,14 @@
 mod controllers;
 pub(crate) mod data_access;
+mod midi_publisher;
 mod models;
+mod mqtt_broker;
+mod web_server;
 
-use axum::Router;
-use axum::routing::get_service;
-use controllers::settings::settings_controller;
-use data_access::json_file::StoredInJsonFile;
-use models::settings::Settings;
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tower_http::{
-    services::{ServeDir, ServeFile},
-    trace::{DefaultMakeSpan, DefaultOnRequest, TraceLayer},
-};
-use tracing::Level; // Import Level for setting trace level
-
-const SPA_DIR: &str = "assets";
+use rumqttd::Config;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Initialize tracing for logging
     tracing_subscriber::fmt()
         .with_env_filter(
@@ -27,45 +17,22 @@ async fn main() {
         )
         .init();
 
-    // Load settings
-    let initial_settings = match Settings::load(()).await {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("Failed to load settings: {e}. Using default settings.");
-            Settings::default()
-        }
-    };
-    let settings_state = Arc::new(RwLock::new(initial_settings));
+    // Load MQTT broker configuration
+    let config = config::Config::builder()
+        .add_source(config::File::with_name("rumqttd.toml"))
+        .build()?;
 
-    // Create a service to serve the index.html file
-    let index_html_service = ServeFile::new(format!("{SPA_DIR}/index.html"));
+    let rumqttd_config: Config = config.try_deserialize()?;
 
-    // Create the static file service with a fallback to index.html
-    let static_service = get_service(ServeDir::new(SPA_DIR).fallback(index_html_service));
+    // Start MQTT broker
+    mqtt_broker::start_broker(rumqttd_config).await?;
 
-    let api_router = Router::new()
-        .nest(
-            "/api/settings",
-            settings_controller(settings_state.clone()),
-        )
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(DefaultMakeSpan::new())
-                .on_request(DefaultOnRequest::new().level(Level::INFO))
-                .on_response(|response: &axum::http::Response<_>, latency: std::time::Duration, _span: &tracing::Span| {
-                    let status = response.status();
-                    if status.is_client_error() || status.is_server_error() {
-                        tracing::warn!(latency = ?latency, status = %status, "response finished");
-                    } else {
-                        tracing::info!(latency = ?latency, status = %status, "response finished");
-                    }
-                })
-        );
+    // Publish MIDI map configuration
+    midi_publisher::publish_midi_map().await?;
 
-    let app = Router::new().merge(api_router).fallback(static_service);
+    // Setup and start web server
+    let app = web_server::setup_web_server().await?;
+    web_server::start_server(app, "[::]:3000").await?;
 
-    // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    tracing::info!(addr = %listener.local_addr().unwrap(), "Server running");
-    axum::serve(listener, app).await.unwrap();
+    Ok(())
 }

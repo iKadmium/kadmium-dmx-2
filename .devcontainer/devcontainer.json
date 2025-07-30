@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/dotnet
 {
-	"name": "C# (.NET)",
+	"name": "Rust",
 	"image": "mcr.microsoft.com/devcontainers/rust:latest",
 	"workspaceFolder": "/workspace",
 	"features": {
@@ -13,11 +13,6 @@
 		"vscode": {
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
-				"ms-dotnettools.csharp",
-				"kreativ-software.csharpextensions",
-				"hbenl.vscode-test-explorer",
-				"ms-vscode.test-adapter-converter",
-				"formulahendry.dotnet-test-explorer",
 				"svelte.svelte-vscode"
 			]
 		}

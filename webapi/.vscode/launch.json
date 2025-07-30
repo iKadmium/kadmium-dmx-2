@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'kadmium-dmx2-webapi'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=kadmium-dmx2-webapi",
+                    "--package=kadmium-dmx2-webapi"
+                ],
+                "filter": {
+                    "name": "kadmium-dmx2-webapi",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'kadmium-dmx2-webapi'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=kadmium-dmx2-webapi",
+                    "--package=kadmium-dmx2-webapi"
+                ],
+                "filter": {
+                    "name": "kadmium-dmx2-webapi",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

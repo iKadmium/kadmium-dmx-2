@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::{Json, Router, extract::State, http::StatusCode, response::IntoResponse, routing::get};
 use tokio::sync::RwLock;
 
-use crate::{Settings, data_access::json_file::StoredInJsonFile};
+use crate::{data_access::json_file::StoredInJsonFile, models::settings::Settings};
 
 pub fn settings_controller(settings: Arc<RwLock<Settings>>) -> Router {
     Router::new()
