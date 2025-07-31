@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package neewer;
+
+// Represents lighting parameters for a Neewer fixture
+message NeewerLightParams {
+    // Hue value (0-360 degrees, but stored as u16 for precision)
+    uint32 hue = 1;
+    
+    // Saturation (0-255)
+    uint32 saturation = 2;
+    
+    // Brightness (0-255)
+    uint32 brightness = 3;
+}
+
+// Represents an update to multiple Neewer light fixtures
+message NeewerUpdate {
+    // Map of Bluetooth address to lighting parameters
+    map<string, NeewerLightParams> fixtures = 1;
+}

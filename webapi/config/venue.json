@@ -1,0 +1,16 @@
+{
+    "venue": {
+        "id": "1",
+        "name": "Some place",
+        "location": {
+            "city": "Some town"
+        },
+        "fixtures": [
+            {
+                "name": "Some fixture",
+                "type": "neewer",
+                "address": "CB:11:33:33:A3:67"
+            }
+        ]
+    }
+}

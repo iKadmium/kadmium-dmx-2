@@ -21,6 +21,10 @@
 			"name": "sAcn Renderer"
 		},
 		{
+			"path": "renderer/neewer",
+			"name": "Neewer Renderer"
+		},
+		{
 			"path": "webapi",
 			"name": "Web API"
 		},

@@ -3,6 +3,7 @@ pub(crate) mod data_access;
 mod midi_publisher;
 mod models;
 mod mqtt_broker;
+mod test_neewer_light;
 mod web_server;
 
 use rumqttd::Config;
@@ -28,7 +29,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     mqtt_broker::start_broker(rumqttd_config).await?;
 
     // Publish MIDI map configuration
-    midi_publisher::publish_midi_map().await?;
+    midi_publisher::publish_config().await?;
+
+    // Test Neewer light configuration
+    test_neewer_light::test_neewer_light().await?;
 
     // Setup and start web server
     let app = web_server::setup_web_server().await?;
