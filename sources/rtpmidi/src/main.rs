@@ -4,7 +4,7 @@ use rtpmidi::sessions::{
     events::event_handling::MidiMessageEvent, invite_responder::InviteResponder,
     rtp_midi_session::RtpMidiSession,
 };
-use rumqttc::{Client, Event, Packet, QoS};
+use rumqttc::{AsyncClient, Event, Packet, QoS};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
@@ -29,7 +29,7 @@ async fn main() {
         .expect("Failed to start RtpMidiSession");
 
     // Shared MQTT client for MIDI messages - will be updated on each reconnection
-    let mqtt_client_for_midi = Arc::new(RwLock::new(None::<Client>));
+    let mqtt_client_for_midi = Arc::new(RwLock::new(None::<AsyncClient>));
 
     // Add MIDI message listener ONCE - outside the reconnection loop
     let midi_map_for_listener = midi_map.clone();
@@ -68,13 +68,16 @@ async fn main() {
 
 async fn run_mqtt_client(
     midi_map: Arc<RwLock<MidiMap>>,
-    mqtt_client_for_midi: Arc<RwLock<Option<Client>>>,
+    mqtt_client_for_midi: Arc<RwLock<Option<AsyncClient>>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mqtt_options = rumqttc::MqttOptions::new("kadmium-dmx", "localhost", 1883);
-    let (mqtt_client, mut connection) = Client::new(mqtt_options, 100);
+    let (mqtt_client, mut eventloop) = AsyncClient::new(mqtt_options, 100);
 
     // Subscribe to the config topic
-    if let Err(e) = mqtt_client.subscribe("config/midi_map", QoS::AtMostOnce) {
+    if let Err(e) = mqtt_client
+        .subscribe("config/midi_map", QoS::AtMostOnce)
+        .await
+    {
         error!("Failed to subscribe to config/midi_map: {e}");
     }
 
@@ -84,7 +87,7 @@ async fn run_mqtt_client(
     // Handle MQTT events and Ctrl+C signal
     loop {
         tokio::select! {
-            event_result = connection.eventloop.poll() => {
+            event_result = eventloop.poll() => {
                 match event_result {
                     Ok(Event::Incoming(Packet::Publish(publish))) => {
                         if publish.topic == "config/midi_map" {
@@ -119,7 +122,7 @@ async fn run_mqtt_client(
 async fn handle_midi_message(
     event: MidiMessage,
     midi_map: Arc<RwLock<MidiMap>>,
-    mqtt_client: Client,
+    mqtt_client: AsyncClient,
 ) {
     // Extract MIDI data - assuming it's a control change message
 
@@ -136,9 +139,12 @@ async fn handle_midi_message(
             let normalized_value = int_value as f32 / 127.0;
 
             let topic = format!("groups/{group}/{attribute}");
-            let payload = normalized_value.to_string();
+            let payload = normalized_value.to_be_bytes();
 
-            if let Err(e) = mqtt_client.publish(topic.clone(), QoS::AtMostOnce, false, payload) {
+            if let Err(e) = mqtt_client
+                .publish(topic.clone(), QoS::AtLeastOnce, true, payload)
+                .await
+            {
                 error!("Failed to publish MQTT message to {topic}: {e}");
             } else {
                 info!("Published {normalized_value} to {topic}");

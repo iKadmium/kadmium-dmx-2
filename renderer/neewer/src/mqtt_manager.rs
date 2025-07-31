@@ -1,7 +1,7 @@
 use anyhow::Result;
 use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
 use btleplug::platform::Manager;
-use kadmium_dmx_shared::venue_fixture::VenueFixture;
+use kadmium_dmx_shared::venue_fixture::VenueFixtureType;
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS};
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -11,7 +11,8 @@ use tracing::{debug, error, info, warn};
 use crate::fixture_manager::FixtureManagerCommand;
 use crate::neewer_fixture::NeweerFixture;
 use kadmium_dmx_shared::{
-    Message, NeewerScanItem, NeewerScanResult, NeewerUpdate, ScanRequest, VenueUpdate,
+    FixtureAddress, Message, NeewerScanItem, NeewerScanResult, NeewerUpdate, ScanRequest,
+    VenueUpdate,
 };
 
 /// MQTT manager that listens for venue configuration updates and fixture control messages
@@ -173,18 +174,15 @@ impl MqttManager {
         let mut neewer_fixtures = Vec::new();
 
         let update_fixtures = venue_update.venue.fixtures.iter();
-        let update_neewer_fixtures = update_fixtures.filter_map(|fixture| {
-            if let VenueFixture::Neewer(neewer_fixture) = &fixture {
-                Some(neewer_fixture)
-            } else {
-                None
-            }
-        });
+        let update_neewer_fixtures = update_fixtures
+            .filter(|fixture| matches!(&fixture.fixture_type, VenueFixtureType::Neewer));
 
         // Extract Neewer fixtures from the venue
         for fixture in update_neewer_fixtures {
-            if let Some(neewer_fixture) = NeweerFixture::from_address(&fixture.address).await {
-                neewer_fixtures.push(neewer_fixture);
+            if let FixtureAddress::Bluetooth { uuid } = &fixture.common.address {
+                if let Some(neewer_fixture) = NeweerFixture::from_address(uuid).await {
+                    neewer_fixtures.push(neewer_fixture);
+                }
             }
         }
 

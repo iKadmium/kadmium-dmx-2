@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     midi_publisher::publish_config().await?;
 
     // Test Neewer light configuration
-    test_neewer_light::test_neewer_light().await?;
+    //test_neewer_light::test_neewer_light().await?;
 
     // Setup and start web server
     let app = web_server::setup_web_server().await?;
