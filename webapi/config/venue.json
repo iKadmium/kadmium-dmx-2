@@ -9,8 +9,15 @@
             {
                 "name": "Some fixture",
                 "type": "neewer",
-                "address": "CB:11:33:33:A3:67"
+                "address": {
+                    "type": "bluetooth",
+                    "uuid": "CB:11:33:33:A3:67"
+                },
+                "groups": [
+                    "Vocalist"
+                ]
             }
         ]
-    }
+    },
+    "definitions": {}
 }

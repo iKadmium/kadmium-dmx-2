@@ -1,3 +1,6 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HsvColor {
     pub hue: f32,        // 0.0 to 360.0
     pub saturation: f32, // 0.0 to 1.0

@@ -7,10 +7,10 @@ message NeewerLightParams {
     // Hue value (0-360 degrees, but stored as u16 for precision)
     uint32 hue = 1;
     
-    // Saturation (0-255)
+    // Saturation (0-100)
     uint32 saturation = 2;
     
-    // Brightness (0-255)
+    // Brightness (0-100)
     uint32 brightness = 3;
 }
 

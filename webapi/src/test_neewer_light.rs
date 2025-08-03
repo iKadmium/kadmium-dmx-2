@@ -5,6 +5,7 @@ use tokio::time::{Duration, interval};
 use tracing::{info, warn};
 
 /// Publishes the MIDI map configuration as a retained MQTT message
+#[allow(dead_code)]
 pub async fn test_neewer_light() -> Result<(), std::io::Error> {
     // Connect as MQTT client to publish the retained MIDI map
     let mqtt_options = MqttOptions::new("neewer-update-publisher", "localhost", 1883);

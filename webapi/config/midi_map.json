@@ -1,10 +1,10 @@
 {
     "groups": {
-        "0": "vocalist",
-        "1": "guitarist",
-        "2": "bassist",
-        "3": "drummer",
-        "4": "rear"
+        "0": "Vocalist",
+        "1": "Guitarist",
+        "2": "Bassist",
+        "3": "Drummer",
+        "4": "Rear"
     },
     "attributes": {
         "1": "Hue",
