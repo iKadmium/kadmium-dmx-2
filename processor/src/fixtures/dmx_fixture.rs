@@ -25,7 +25,7 @@ pub struct DmxFixture {
     pub manufacturer: String,
     pub model: String,
     pub personality: String,
-    pub subscriptions: Vec<broadcast::Receiver<(String, f32)>>,
+    subscriptions: Vec<broadcast::Receiver<(String, f32)>>,
     pub effects: Vec<Box<dyn Effect<DmxFixture> + Send + Sync>>,
 }
 

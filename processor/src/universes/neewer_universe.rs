@@ -1,7 +1,8 @@
 use bytes::BufMut;
 use kadmium_dmx_shared::{Message, NeewerLightParams, NeewerUpdate};
+use tracing::error;
 
-use crate::fixtures::neewer_fixture::NeewerFixture;
+use crate::fixtures::{fixture::Fixture, neewer_fixture::NeewerFixture};
 
 #[derive(Debug)]
 pub struct NeewerUniverse {
@@ -31,16 +32,16 @@ impl NeewerUniverse {
     }
 
     pub fn render(&mut self) {
-        for fixture in &self.fixtures {
+        for fixture in &mut self.fixtures {
             let update = self
                 .update
                 .fixtures
                 .get_mut(&fixture.address.to_string())
                 .unwrap();
 
-            update.hue = fixture.channels.hue;
-            update.saturation = fixture.channels.saturation;
-            update.brightness = fixture.channels.brightness;
+            if let Err(e) = fixture.render(update) {
+                error!("Failed to render fixture '{}': {}", fixture.name, e);
+            }
         }
     }
 

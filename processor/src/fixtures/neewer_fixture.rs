@@ -4,6 +4,7 @@ use kadmium_dmx_shared::{
     FixtureAddress, NeewerLightParams,
     dmx_fixtures::{channel::Channel, fixture_personality::FixturePersonality},
 };
+use tokio::sync::broadcast;
 
 use crate::{
     effects::{attribute::Attribute, effect::Effect, neewer_hsv_to_hsv::NeewerHsvToHsv},
@@ -15,12 +16,16 @@ pub struct NeewerFixture {
     pub name: String,
     pub address: String,
     pub attributes: HashMap<String, Attribute>,
-    pub channels: NeewerLightParams,
+    subscriptions: Vec<broadcast::Receiver<(String, f32)>>,
     pub effects: Vec<Box<dyn Effect<NeewerFixture> + Send + Sync>>,
 }
 
 impl NeewerFixture {
-    pub fn new(name: String, address: FixtureAddress) -> Self {
+    pub fn new(
+        name: String,
+        address: FixtureAddress,
+        group_senders: Vec<broadcast::Sender<(String, f32)>>,
+    ) -> Self {
         let mut attributes = HashMap::new();
         let channels = HashMap::from([
             ("Hue".to_string(), Channel::new("Hue".to_string(), 1)),
@@ -52,16 +57,17 @@ impl NeewerFixture {
             panic!("Neewer fixtures must use Bluetooth addresses");
         };
 
+        let subscriptions = group_senders
+            .iter()
+            .map(|sender| sender.subscribe())
+            .collect::<Vec<_>>();
+
         NeewerFixture {
             name,
             address,
             attributes,
-            channels: NeewerLightParams {
-                hue: 0,
-                saturation: 0,
-                brightness: 0,
-            },
             effects,
+            subscriptions,
         }
     }
 }
@@ -70,6 +76,20 @@ impl Fixture for NeewerFixture {
     type RenderTarget<'a> = NeewerLightParams;
 
     fn render(&mut self, target: &mut Self::RenderTarget<'_>) -> std::io::Result<()> {
+        self.subscriptions.iter_mut().for_each(|subscription| {
+            while let Ok((attribute_name, value)) = subscription.try_recv() {
+                self.attributes
+                    .get(&attribute_name)
+                    .map(|attr| attr.set_value(value).unwrap_or(()))
+                    .unwrap_or_else(|| {
+                        eprintln!(
+                            "Attribute '{}' not found in fixture '{}'",
+                            attribute_name, self.name
+                        );
+                    });
+            }
+        });
+
         for effect in &self.effects {
             effect.apply(self, target)?;
         }

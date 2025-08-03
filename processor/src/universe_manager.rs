@@ -18,40 +18,37 @@ use kadmium_dmx_shared::{
     venue_fixture::{VenueFixture, VenueFixtureType},
 };
 
-pub struct FixtureManager {
+pub struct UniverseManager {
     group_subscriptions: HashMap<String, broadcast::Sender<(String, f32)>>,
     venue: Option<Venue>,
+    universes: UniverseMap,
 }
 
 type UniverseMap = HashMap<UniverseIdentifier, UniverseContainer>;
 
-impl FixtureManager {
+impl UniverseManager {
     pub fn new() -> Self {
         Self {
             group_subscriptions: HashMap::new(),
             venue: None,
+            universes: HashMap::new(),
         }
     }
 
-    pub fn update_venue(
-        &mut self,
-        venue: Venue,
-        definitions: &DefinitionsSet,
-        universes: &mut UniverseMap,
-    ) -> Result<()> {
+    pub fn update_venue(&mut self, venue: Venue, definitions: &DefinitionsSet) -> Result<()> {
         info!("Updating venue configuration: {}", venue.name);
 
         // Clear existing fixtures and groups
-        universes.clear();
+        self.universes.clear();
 
         // Create universes based on venue configuration
-        self.create_universes(&venue, universes)?;
+        self.create_universes(&venue)?;
 
         self.create_groups(&venue)?;
 
         // Create fixtures from venue configuration
         for venue_fixture in &venue.fixtures {
-            self.create_fixture(venue_fixture, definitions, universes)?;
+            self.create_fixture(venue_fixture, definitions)?;
         }
 
         self.venue = Some(venue);
@@ -78,11 +75,11 @@ impl FixtureManager {
         Ok(())
     }
 
-    fn create_universes(&mut self, venue: &Venue, universes: &mut UniverseMap) -> Result<()> {
+    fn create_universes(&mut self, venue: &Venue) -> Result<()> {
         // Add DMX universes (ArtNet and sACN)
         for venue_fixture in &venue.fixtures {
             let identifier = UniverseIdentifier::from_address(&venue_fixture.common.address);
-            universes
+            self.universes
                 .entry(identifier)
                 .or_insert_with(|| match identifier.universe_type {
                     UniverseType::Sacn => {
@@ -101,7 +98,6 @@ impl FixtureManager {
         &mut self,
         venue_fixture: &VenueFixture,
         definitions: &DefinitionsSet,
-        universes: &mut UniverseMap,
     ) -> Result<()> {
         let mut senders = Vec::new();
 
@@ -115,7 +111,8 @@ impl FixtureManager {
             senders.push(subscription.clone());
         }
 
-        let universe = universes
+        let universe = self
+            .universes
             .get_mut(&UniverseIdentifier::from_address(
                 &venue_fixture.common.address,
             ))
@@ -161,6 +158,7 @@ impl FixtureManager {
                 let neewer_fixture = NeewerFixture::new(
                     venue_fixture.common.name.clone(),
                     venue_fixture.common.address.clone(),
+                    senders,
                 );
 
                 // Add to universe
@@ -174,7 +172,7 @@ impl FixtureManager {
     }
 
     pub fn update_group_attribute(
-        &mut self,
+        &self,
         group_name: &str,
         attribute: &str,
         value: f32,
@@ -198,5 +196,11 @@ impl FixtureManager {
         }
 
         Ok(())
+    }
+
+    pub fn universes_iter_mut(
+        &mut self,
+    ) -> impl Iterator<Item = (&UniverseIdentifier, &mut UniverseContainer)> {
+        self.universes.iter_mut()
     }
 }

@@ -1,22 +1,18 @@
 mod effects;
-mod fixture_manager;
 mod fixtures;
 mod mqtt_manager;
+mod universe_manager;
 mod universes;
 
-use std::{
-    collections::HashMap,
-    env,
-    sync::{Arc, Mutex},
-};
+use std::env;
 
 use anyhow::Result;
 use bytes::BytesMut;
 use tokio::sync::mpsc;
 use tracing::{error, info};
 
-use fixture_manager::FixtureManager;
 use mqtt_manager::{MqttManager, MqttMessage};
+use universe_manager::UniverseManager;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -47,44 +43,7 @@ async fn main() -> Result<()> {
     // Clone the MQTT manager for the update task
     let mqtt_client = mqtt_manager.get_client().clone();
 
-    // Spawn background task for MQTT message processing
-    let fixture_manager = Arc::new(Mutex::new(FixtureManager::new()));
-    let universes = Arc::new(Mutex::new(HashMap::new()));
-
-    let fm_for_mqtt = fixture_manager.clone();
-    let univ_for_mqtt = universes.clone();
-
-    tokio::spawn(async move {
-        while let Some(message) = message_receiver.recv().await {
-            match message {
-                MqttMessage::VenueUpdate(venue_update) => {
-                    if let (Ok(mut fm), Ok(mut universes)) =
-                        (fm_for_mqtt.try_lock(), univ_for_mqtt.try_lock())
-                    {
-                        if let Err(e) = fm.update_venue(
-                            venue_update.venue,
-                            &venue_update.definitions,
-                            &mut universes,
-                        ) {
-                            error!("Failed to update venue configuration: {}", e);
-                        }
-                    }
-                }
-                MqttMessage::GroupAttributeUpdate {
-                    group_name,
-                    attribute,
-                    value,
-                } => {
-                    if let Ok(mut fm) = fm_for_mqtt.try_lock() {
-                        if let Err(e) = fm.update_group_attribute(&group_name, &attribute, value) {
-                            error!("Failed to update group attribute: {}", e);
-                        }
-                    }
-                }
-            }
-        }
-        error!("MQTT message channel closed, background task exiting...");
-    });
+    let mut universe_manager = UniverseManager::new();
 
     // Main update loop at 40 Hz (25ms interval)
     let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(25));
@@ -92,7 +51,32 @@ async fn main() -> Result<()> {
     loop {
         interval.tick().await;
 
-        for (_, universe_container) in universes.lock().unwrap().iter_mut() {
+        // Process MQTT messages non-blockingly
+        while let Ok(message) = message_receiver.try_recv() {
+            match message {
+                MqttMessage::VenueUpdate(venue_update) => {
+                    if let Err(e) =
+                        universe_manager.update_venue(venue_update.venue, &venue_update.definitions)
+                    {
+                        error!("Failed to update venue configuration: {}", e);
+                    }
+                }
+                MqttMessage::GroupAttributeUpdate {
+                    group_name,
+                    attribute,
+                    value,
+                } => {
+                    if let Err(e) =
+                        universe_manager.update_group_attribute(&group_name, &attribute, value)
+                    {
+                        error!("Failed to update group attribute: {}", e);
+                    }
+                }
+            }
+        }
+
+        // Render and publish universe updates
+        for (_, universe_container) in universe_manager.universes_iter_mut() {
             let mut send_payload = BytesMut::with_capacity(512); // Placeholder payload, adjust as needed
 
             if let Err(e) = universe_container.render() {
