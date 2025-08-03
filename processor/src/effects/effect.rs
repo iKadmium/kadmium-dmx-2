@@ -17,7 +17,7 @@ pub trait Effect<F: Fixture>: Send + Sync + Debug {
             .get_value())
     }
 
-    fn apply(&self, fixture: &F, target: &mut F::RenderTarget<'_>) -> std::io::Result<()>;
+    fn apply(&mut self, fixture: &F, target: &mut F::RenderTarget<'_>) -> std::io::Result<()>;
 
     fn get_attributes(&self) -> &[&str];
 }

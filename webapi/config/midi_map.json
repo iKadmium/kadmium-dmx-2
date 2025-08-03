@@ -9,6 +9,7 @@
     "attributes": {
         "1": "Hue",
         "2": "Saturation",
-        "3": "Brightness"
+        "3": "Brightness",
+        "4": "Strobe"
     }
 }

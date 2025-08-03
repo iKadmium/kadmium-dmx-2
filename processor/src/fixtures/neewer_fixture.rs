@@ -7,7 +7,10 @@ use kadmium_dmx_shared::{
 use tokio::sync::broadcast;
 
 use crate::{
-    effects::{attribute::Attribute, effect::Effect, neewer_hsv_to_hsv::NeewerHsvToHsv},
+    effects::{
+        attribute::Attribute, effect::Effect, neewer_fake_strobe::NeewerFakeStrobe,
+        neewer_hsv_to_hsv::NeewerHsvToHsv,
+    },
     fixtures::fixture::Fixture,
 };
 
@@ -90,16 +93,26 @@ impl Fixture for NeewerFixture {
             }
         });
 
-        for effect in &self.effects {
+        // Temporarily move effects out to avoid borrowing conflicts
+        let mut effects = std::mem::take(&mut self.effects);
+
+        for effect in &mut effects {
             effect.apply(self, target)?;
         }
+
+        // Move effects back
+        self.effects = effects;
+
         Ok(())
     }
 
     fn create_effects(
         _personality: &kadmium_dmx_shared::dmx_fixtures::fixture_personality::FixturePersonality,
     ) -> Vec<Box<dyn Effect<Self> + Send + Sync>> {
-        let effects: Vec<Box<dyn Effect<Self> + Send + Sync>> = vec![Box::new(NeewerHsvToHsv {})];
+        let effects: Vec<Box<dyn Effect<Self> + Send + Sync>> = vec![
+            Box::new(NeewerHsvToHsv {}),
+            Box::new(NeewerFakeStrobe::new()),
+        ];
         effects
     }
 }

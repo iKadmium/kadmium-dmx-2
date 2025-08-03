@@ -8,7 +8,7 @@ pub struct NeewerHsvToHsv;
 
 impl Effect<NeewerFixture> for NeewerHsvToHsv {
     fn apply(
-        &self,
+        &mut self,
         fixture: &NeewerFixture,
         params: &mut <NeewerFixture as Fixture>::RenderTarget<'_>,
     ) -> std::io::Result<()> {

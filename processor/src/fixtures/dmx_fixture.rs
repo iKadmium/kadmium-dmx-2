@@ -118,9 +118,15 @@ impl Fixture for DmxFixture {
             }
         });
 
-        for effect in &self.effects {
+        // Temporarily move effects out to avoid borrowing conflicts
+        let mut effects = std::mem::take(&mut self.effects);
+
+        for effect in &mut effects {
             effect.apply(self, target)?;
         }
+
+        // Move effects back
+        self.effects = effects;
         Ok(())
     }
 

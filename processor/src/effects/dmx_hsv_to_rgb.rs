@@ -11,7 +11,7 @@ pub struct HsvToRgb {}
 
 impl Effect<DmxFixture> for HsvToRgb {
     fn apply(
-        &self,
+        &mut self,
         fixture: &DmxFixture,
         target: &mut <dmx_fixture::DmxFixture as fixture::Fixture>::RenderTarget<'_>,
     ) -> std::io::Result<()> {
