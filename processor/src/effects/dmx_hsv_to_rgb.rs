@@ -1,3 +1,5 @@
+use kadmium_dmx_shared::dmx_fixtures::fixture_personality::FixturePersonality;
+
 use crate::{
     effects::effect::Effect,
     fixtures::{
@@ -7,14 +9,27 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct HsvToRgb {}
+pub struct HsvToRgb {
+    red_index: usize,
+    green_index: usize,
+    blue_index: usize,
+}
+impl HsvToRgb {
+    pub(crate) fn new(personality: &FixturePersonality, address: u16) -> Self {
+        let red_index = (personality.channels.get("Red").unwrap().address + address) as usize;
+        let green_index = (personality.channels.get("Green").unwrap().address + address) as usize;
+        let blue_index = (personality.channels.get("Blue").unwrap().address + address) as usize;
+
+        Self {
+            red_index,
+            green_index,
+            blue_index,
+        }
+    }
+}
 
 impl Effect<DmxFixture> for HsvToRgb {
-    fn apply(
-        &mut self,
-        fixture: &DmxFixture,
-        target: &mut <dmx_fixture::DmxFixture as fixture::Fixture>::RenderTarget<'_>,
-    ) -> std::io::Result<()> {
+    fn render(&self, fixture: &DmxFixture, target: &mut <dmx_fixture::DmxFixture as fixture::Fixture>::RenderTarget<'_>) -> std::io::Result<()> {
         let buffer = target;
 
         let h = self.get_attribute_value(&fixture.attributes, "Hue")?;
@@ -37,18 +52,18 @@ impl Effect<DmxFixture> for HsvToRgb {
             _ => (0.0, 0.0, 0.0), // Should not happen
         };
 
-        let red_index = fixture.get_channel_index("Red")?;
-        let green_index = fixture.get_channel_index("Green")?;
-        let blue_index = fixture.get_channel_index("Blue")?;
-
-        buffer[red_index] = (r * 255.0).round() as u8;
-        buffer[green_index] = (g * 255.0).round() as u8;
-        buffer[blue_index] = (b * 255.0).round() as u8;
+        buffer[self.red_index] = (r * 255.0).round() as u8;
+        buffer[self.green_index] = (g * 255.0).round() as u8;
+        buffer[self.blue_index] = (b * 255.0).round() as u8;
 
         Ok(())
     }
 
     fn get_attributes(&self) -> &[&str] {
         &["Hue", "Saturation", "Brightness"]
+    }
+
+    fn valid_for_fixture(personality: &FixturePersonality) -> bool {
+        personality.channels.contains_key("Red") && personality.channels.contains_key("Green") && personality.channels.contains_key("Blue")
     }
 }

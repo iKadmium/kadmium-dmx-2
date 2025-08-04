@@ -3,6 +3,8 @@ use crate::{
     universes::{dmx_universe::DmxUniverse, neewer_universe::NeewerUniverse},
 };
 use bytes::BytesMut;
+use std::collections::HashMap;
+use tokio::sync::broadcast;
 
 /// Type-safe container for different universe types
 #[derive(Debug)]
@@ -30,6 +32,30 @@ impl UniverseContainer {
                 Ok(())
             }
             _ => Err("Cannot add DMX fixture to non-DMX universe"),
+        }
+    }
+
+    pub fn update_fixture_subscriptions(&mut self, fixture_name: &str, attribute_receivers: HashMap<String, broadcast::Receiver<f32>>) {
+        match self {
+            UniverseContainer::Dmx(dmx) => {
+                dmx.update_fixture_subscriptions(fixture_name, attribute_receivers);
+            }
+            UniverseContainer::Neewer(neewer) => {
+                neewer.update_fixture_subscriptions(fixture_name, attribute_receivers);
+            }
+        }
+    }
+
+    pub fn update(&mut self) -> std::io::Result<()> {
+        match self {
+            UniverseContainer::Dmx(dmx) => {
+                dmx.update()?;
+                Ok(())
+            }
+            UniverseContainer::Neewer(neewer) => {
+                neewer.update()?;
+                Ok(())
+            }
         }
     }
 

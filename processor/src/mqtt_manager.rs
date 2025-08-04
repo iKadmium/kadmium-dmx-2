@@ -5,16 +5,13 @@ use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS};
 use tokio::sync::mpsc;
 use tracing::{error, info, warn};
 
-use kadmium_dmx_shared::VenueUpdate;
+use kadmium_dmx_shared::{MidiMap, VenueUpdate};
 
 #[derive(Debug, Clone)]
 pub enum MqttMessage {
     VenueUpdate(VenueUpdate),
-    GroupAttributeUpdate {
-        group_name: String,
-        attribute: String,
-        value: f32,
-    },
+    MidiMapUpdate(MidiMap),
+    GroupAttributeUpdate { group_name: String, attribute: String, value: f32 },
 }
 
 pub struct MqttManager {
@@ -22,12 +19,7 @@ pub struct MqttManager {
 }
 
 impl MqttManager {
-    pub fn new(
-        broker_host: &str,
-        broker_port: u16,
-        client_id: &str,
-        message_sender: mpsc::UnboundedSender<MqttMessage>,
-    ) -> Result<Self> {
+    pub fn new(broker_host: &str, broker_port: u16, client_id: &str, message_sender: mpsc::UnboundedSender<MqttMessage>) -> Result<Self> {
         let mut mqttoptions = MqttOptions::new(client_id, broker_host, broker_port);
         mqttoptions.set_keep_alive(Duration::from_secs(60));
 
@@ -39,11 +31,7 @@ impl MqttManager {
             loop {
                 match eventloop.poll().await {
                     Ok(Event::Incoming(Packet::Publish(publish))) => {
-                        if let Err(e) = Self::handle_mqtt_message(
-                            &publish.topic,
-                            &publish.payload,
-                            &sender_clone,
-                        ) {
+                        if let Err(e) = Self::handle_mqtt_message(&publish.topic, &publish.payload, &sender_clone) {
                             error!("Failed to handle MQTT message: {}", e);
                         }
                     }
@@ -63,24 +51,19 @@ impl MqttManager {
         info!("Starting MQTT manager...");
 
         // Subscribe to venue configuration updates
-        self.client
-            .subscribe("config/venue", QoS::AtLeastOnce)
-            .await?;
+        self.client.subscribe("config/venue", QoS::AtLeastOnce).await?;
+
+        // Subscribe to MIDI map configuration updates
+        self.client.subscribe("config/midi_map", QoS::AtLeastOnce).await?;
 
         // Subscribe to group attribute updates
-        self.client
-            .subscribe("groups/+/+", QoS::AtLeastOnce)
-            .await?;
+        self.client.subscribe("groups/+/+", QoS::AtLeastOnce).await?;
 
         info!("MQTT manager started successfully");
         Ok(())
     }
 
-    fn handle_mqtt_message(
-        topic: &str,
-        payload: &[u8],
-        sender: &mpsc::UnboundedSender<MqttMessage>,
-    ) -> Result<()> {
+    fn handle_mqtt_message(topic: &str, payload: &[u8], sender: &mpsc::UnboundedSender<MqttMessage>) -> Result<()> {
         info!("Received MQTT message on topic '{}'", topic);
 
         if topic == "config/venue" {
@@ -95,6 +78,18 @@ impl MqttManager {
                     error!("Failed to parse venue configuration: {}", e);
                 }
             }
+        } else if topic == "config/midi_map" {
+            let payload_str = std::str::from_utf8(payload)?;
+            match serde_json::from_str::<MidiMap>(payload_str) {
+                Ok(midi_map) => {
+                    if let Err(e) = sender.send(MqttMessage::MidiMapUpdate(midi_map)) {
+                        error!("Failed to send MIDI map update message: {}", e);
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to parse MIDI map configuration: {}", e);
+                }
+            }
         } else if topic.starts_with("groups/") {
             // Parse topic: groups/{group_name}/{attribute}
             let topic_parts: Vec<&str> = topic.split('/').collect();
@@ -103,11 +98,7 @@ impl MqttManager {
                 let attribute = topic_parts[2].to_string();
                 let value = f32::from_be_bytes(payload.try_into().unwrap());
 
-                if let Err(e) = sender.send(MqttMessage::GroupAttributeUpdate {
-                    group_name,
-                    attribute,
-                    value,
-                }) {
+                if let Err(e) = sender.send(MqttMessage::GroupAttributeUpdate { group_name, attribute, value }) {
                     error!("Failed to send group attribute update message: {}", e);
                 }
             } else {

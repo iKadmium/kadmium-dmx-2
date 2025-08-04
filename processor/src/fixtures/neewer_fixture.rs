@@ -7,11 +7,9 @@ use kadmium_dmx_shared::{
 use tokio::sync::broadcast;
 
 use crate::{
-    effects::{
-        attribute::Attribute, effect::Effect, neewer_fake_strobe::NeewerFakeStrobe,
-        neewer_hsv_to_hsv::NeewerHsvToHsv,
-    },
+    effects::{attribute::Attribute, effect::Effect, neewer_fake_strobe::NeewerFakeStrobe, neewer_hsv_to_hsv::NeewerHsvToHsv},
     fixtures::fixture::Fixture,
+    macros::fixture_accessors,
 };
 
 #[derive(Debug)]
@@ -19,51 +17,37 @@ pub struct NeewerFixture {
     pub name: String,
     pub address: String,
     pub attributes: HashMap<String, Attribute>,
-    subscriptions: Vec<broadcast::Receiver<(String, f32)>>,
+    subscriptions: HashMap<String, broadcast::Receiver<f32>>,
     pub effects: Vec<Box<dyn Effect<NeewerFixture> + Send + Sync>>,
 }
 
+// Generate the accessor methods
+fixture_accessors!(NeewerFixture);
+
 impl NeewerFixture {
-    pub fn new(
-        name: String,
-        address: FixtureAddress,
-        group_senders: Vec<broadcast::Sender<(String, f32)>>,
-    ) -> Self {
+    pub fn new(name: String, address: FixtureAddress) -> Self {
         let mut attributes = HashMap::new();
         let channels = HashMap::from([
             ("Hue".to_string(), Channel::new("Hue".to_string(), 1)),
-            (
-                "Saturation".to_string(),
-                Channel::new("Saturation".to_string(), 2),
-            ),
-            (
-                "Brightness".to_string(),
-                Channel::new("Brightness".to_string(), 3),
-            ),
+            ("Saturation".to_string(), Channel::new("Saturation".to_string(), 2)),
+            ("Brightness".to_string(), Channel::new("Brightness".to_string(), 3)),
         ]);
         let personality = FixturePersonality::new("Neewer Personality".to_string(), channels);
-        let effects = Self::create_effects(&personality);
-        for effect in &effects {
-            for attribute in effect.get_attributes() {
-                if !attributes.contains_key(*attribute) {
-                    attributes.insert(
-                        (*attribute).to_string(),
-                        Attribute::new((*attribute).to_string(), 0.0),
-                    );
-                }
-            }
-        }
-
         let address = if let FixtureAddress::Bluetooth { uuid } = address {
             uuid.to_string()
         } else {
             panic!("Neewer fixtures must use Bluetooth addresses");
         };
+        let effects = Self::create_effects(&personality, &address.as_ref());
+        for effect in &effects {
+            for attribute in effect.get_attributes() {
+                if !attributes.contains_key(*attribute) {
+                    attributes.insert((*attribute).to_string(), Attribute::new((*attribute).to_string(), 0.0));
+                }
+            }
+        }
 
-        let subscriptions = group_senders
-            .iter()
-            .map(|sender| sender.subscribe())
-            .collect::<Vec<_>>();
+        let subscriptions = HashMap::new();
 
         NeewerFixture {
             name,
@@ -77,42 +61,10 @@ impl NeewerFixture {
 
 impl Fixture for NeewerFixture {
     type RenderTarget<'a> = NeewerLightParams;
+    type AddressType<'a> = &'a str;
 
-    fn render(&mut self, target: &mut Self::RenderTarget<'_>) -> std::io::Result<()> {
-        self.subscriptions.iter_mut().for_each(|subscription| {
-            while let Ok((attribute_name, value)) = subscription.try_recv() {
-                self.attributes
-                    .get(&attribute_name)
-                    .map(|attr| attr.set_value(value).unwrap_or(()))
-                    .unwrap_or_else(|| {
-                        eprintln!(
-                            "Attribute '{}' not found in fixture '{}'",
-                            attribute_name, self.name
-                        );
-                    });
-            }
-        });
-
-        // Temporarily move effects out to avoid borrowing conflicts
-        let mut effects = std::mem::take(&mut self.effects);
-
-        for effect in &mut effects {
-            effect.apply(self, target)?;
-        }
-
-        // Move effects back
-        self.effects = effects;
-
-        Ok(())
-    }
-
-    fn create_effects(
-        _personality: &kadmium_dmx_shared::dmx_fixtures::fixture_personality::FixturePersonality,
-    ) -> Vec<Box<dyn Effect<Self> + Send + Sync>> {
-        let effects: Vec<Box<dyn Effect<Self> + Send + Sync>> = vec![
-            Box::new(NeewerHsvToHsv {}),
-            Box::new(NeewerFakeStrobe::new()),
-        ];
+    fn create_effects(_personality: &FixturePersonality, _address: &Self::AddressType<'_>) -> Vec<Box<dyn Effect<Self> + Send + Sync>> {
+        let effects: Vec<Box<dyn Effect<Self> + Send + Sync>> = vec![Box::new(NeewerHsvToHsv {}), Box::new(NeewerFakeStrobe::new())];
         effects
     }
 }

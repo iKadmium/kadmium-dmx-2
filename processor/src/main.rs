@@ -1,5 +1,6 @@
 mod effects;
 mod fixtures;
+mod macros;
 mod mqtt_manager;
 mod universe_manager;
 mod universes;
@@ -23,10 +24,7 @@ async fn main() -> Result<()> {
 
     // Get MQTT broker configuration from environment variables
     let mqtt_host = env::var("MQTT_HOST").unwrap_or_else(|_| "localhost".to_string());
-    let mqtt_port = env::var("MQTT_PORT")
-        .unwrap_or_else(|_| "1883".to_string())
-        .parse::<u16>()
-        .unwrap_or(1883);
+    let mqtt_port = env::var("MQTT_PORT").unwrap_or_else(|_| "1883".to_string()).parse::<u16>().unwrap_or(1883);
     let client_id = env::var("MQTT_CLIENT_ID").unwrap_or_else(|_| "dmx-processor".to_string());
 
     info!("Connecting to MQTT broker at {}:{}", mqtt_host, mqtt_port);
@@ -55,20 +53,17 @@ async fn main() -> Result<()> {
         while let Ok(message) = message_receiver.try_recv() {
             match message {
                 MqttMessage::VenueUpdate(venue_update) => {
-                    if let Err(e) =
-                        universe_manager.update_venue(venue_update.venue, &venue_update.definitions)
-                    {
+                    if let Err(e) = universe_manager.update_venue(venue_update.venue, &venue_update.definitions) {
                         error!("Failed to update venue configuration: {}", e);
                     }
                 }
-                MqttMessage::GroupAttributeUpdate {
-                    group_name,
-                    attribute,
-                    value,
-                } => {
-                    if let Err(e) =
-                        universe_manager.update_group_attribute(&group_name, &attribute, value)
-                    {
+                MqttMessage::MidiMapUpdate(midi_map) => {
+                    if let Err(e) = universe_manager.update_midi_map(midi_map) {
+                        error!("Failed to update MIDI map configuration: {}", e);
+                    }
+                }
+                MqttMessage::GroupAttributeUpdate { group_name, attribute, value } => {
+                    if let Err(e) = universe_manager.update_group_attribute(&group_name, &attribute, value) {
                         error!("Failed to update group attribute: {}", e);
                     }
                 }
@@ -79,8 +74,14 @@ async fn main() -> Result<()> {
         for (_, universe_container) in universe_manager.universes_iter_mut() {
             let mut send_payload = BytesMut::with_capacity(512); // Placeholder payload, adjust as needed
 
+            if let Err(e) = universe_container.update() {
+                error!("Failed to update universe: {}", e);
+                continue;
+            }
+
             if let Err(e) = universe_container.render() {
                 error!("Failed to render universe: {}", e);
+                continue;
             }
 
             let topic = match universe_container.get_update(&mut send_payload) {
@@ -92,12 +93,7 @@ async fn main() -> Result<()> {
             };
 
             if let Err(e) = mqtt_client
-                .publish(
-                    format!("{topic}/update"),
-                    rumqttc::QoS::AtLeastOnce,
-                    false,
-                    send_payload.freeze(),
-                )
+                .publish(format!("{topic}/update"), rumqttc::QoS::AtLeastOnce, false, send_payload.freeze())
                 .await
             {
                 error!("Failed to publish universe update for {topic}: {}", e);

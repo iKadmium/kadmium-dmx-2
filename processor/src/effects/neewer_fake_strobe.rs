@@ -1,6 +1,7 @@
 use std::time::Instant;
 
-use tracing::{info, trace};
+use kadmium_dmx_shared::dmx_fixtures::fixture_personality::FixturePersonality;
+use tracing::info;
 
 use crate::{effects::effect::Effect, fixtures::neewer_fixture::NeewerFixture};
 
@@ -13,10 +14,7 @@ pub struct NeewerFakeStrobe {
 impl NeewerFakeStrobe {
     pub fn new() -> Self {
         let next_flip = Instant::now() + std::time::Duration::from_millis(50);
-        NeewerFakeStrobe {
-            next_flip,
-            on: true,
-        }
+        NeewerFakeStrobe { next_flip, on: true }
     }
 }
 
@@ -25,16 +23,15 @@ impl Effect<NeewerFixture> for NeewerFakeStrobe {
         &["Strobe"]
     }
 
-    fn apply(
-        &mut self,
-        fixture: &NeewerFixture,
-        target: &mut <NeewerFixture as crate::fixtures::fixture::Fixture>::RenderTarget<'_>,
-    ) -> std::io::Result<()> {
+    fn update(&mut self) -> std::io::Result<()> {
         if Instant::now() > self.next_flip {
             self.on = !self.on;
             self.next_flip = Instant::now() + std::time::Duration::from_millis(50);
         }
+        Ok(())
+    }
 
+    fn render(&self, fixture: &NeewerFixture, target: &mut <NeewerFixture as crate::fixtures::fixture::Fixture>::RenderTarget<'_>) -> std::io::Result<()> {
         let enabled = if let Some(attr) = fixture.attributes.get("Strobe") {
             attr.get_value() == 1.0
         } else {
@@ -49,5 +46,12 @@ impl Effect<NeewerFixture> for NeewerFakeStrobe {
         }
 
         Ok(())
+    }
+
+    fn valid_for_fixture(personality: &FixturePersonality) -> bool
+    where
+        Self: Sized,
+    {
+        personality.channels.contains_key("Brightness") && !personality.channels.contains_key("Strobe")
     }
 }
