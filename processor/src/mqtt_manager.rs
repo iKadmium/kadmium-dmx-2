@@ -9,9 +9,9 @@ use kadmium_dmx_shared::{MidiMap, VenueUpdate};
 
 #[derive(Debug, Clone)]
 pub enum MqttMessage {
-    VenueUpdate(VenueUpdate),
-    MidiMapUpdate(MidiMap),
-    GroupAttributeUpdate { group_name: String, attribute: String, value: f32 },
+    Venue(VenueUpdate),
+    MidiMap(MidiMap),
+    GroupAttribute { group_name: String, attribute: String, value: f32 },
 }
 
 pub struct MqttManager {
@@ -70,7 +70,7 @@ impl MqttManager {
             let payload_str = std::str::from_utf8(payload)?;
             match serde_json::from_str::<VenueUpdate>(payload_str) {
                 Ok(venue) => {
-                    if let Err(e) = sender.send(MqttMessage::VenueUpdate(venue)) {
+                    if let Err(e) = sender.send(MqttMessage::Venue(venue)) {
                         error!("Failed to send venue update message: {}", e);
                     }
                 }
@@ -82,7 +82,7 @@ impl MqttManager {
             let payload_str = std::str::from_utf8(payload)?;
             match serde_json::from_str::<MidiMap>(payload_str) {
                 Ok(midi_map) => {
-                    if let Err(e) = sender.send(MqttMessage::MidiMapUpdate(midi_map)) {
+                    if let Err(e) = sender.send(MqttMessage::MidiMap(midi_map)) {
                         error!("Failed to send MIDI map update message: {}", e);
                     }
                 }
@@ -98,7 +98,7 @@ impl MqttManager {
                 let attribute = topic_parts[2].to_string();
                 let value = f32::from_be_bytes(payload.try_into().unwrap());
 
-                if let Err(e) = sender.send(MqttMessage::GroupAttributeUpdate { group_name, attribute, value }) {
+                if let Err(e) = sender.send(MqttMessage::GroupAttribute { group_name, attribute, value }) {
                     error!("Failed to send group attribute update message: {}", e);
                 }
             } else {

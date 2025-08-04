@@ -52,17 +52,17 @@ async fn main() -> Result<()> {
         // Process MQTT messages non-blockingly
         while let Ok(message) = message_receiver.try_recv() {
             match message {
-                MqttMessage::VenueUpdate(venue_update) => {
+                MqttMessage::Venue(venue_update) => {
                     if let Err(e) = universe_manager.update_venue(venue_update.venue, &venue_update.definitions) {
                         error!("Failed to update venue configuration: {}", e);
                     }
                 }
-                MqttMessage::MidiMapUpdate(midi_map) => {
+                MqttMessage::MidiMap(midi_map) => {
                     if let Err(e) = universe_manager.update_midi_map(midi_map) {
                         error!("Failed to update MIDI map configuration: {}", e);
                     }
                 }
-                MqttMessage::GroupAttributeUpdate { group_name, attribute, value } => {
+                MqttMessage::GroupAttribute { group_name, attribute, value } => {
                     if let Err(e) = universe_manager.update_group_attribute(&group_name, &attribute, value) {
                         error!("Failed to update group attribute: {}", e);
                     }

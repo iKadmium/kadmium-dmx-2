@@ -5,7 +5,7 @@ use tokio::sync::broadcast;
 use tracing::{info, warn};
 
 use crate::{
-    fixtures::{dmx_fixture::DmxFixture, neewer_fixture::NeewerFixture, fixture::FixtureAccessors},
+    fixtures::{dmx_fixture::DmxFixture, neewer_fixture::NeewerFixture},
     universes::{
         dmx_universe::DmxUniverse,
         neewer_universe::NeewerUniverse,
@@ -83,6 +83,12 @@ impl UniverseManager {
         }
 
         self.venue = Some(venue);
+
+        // Update subscriptions for all fixtures if we have MIDI map channels
+        if !self.attribute_channels.is_empty() {
+            self.update_all_fixture_subscriptions();
+        }
+
         info!("Venue configuration updated successfully");
         Ok(())
     }
@@ -124,19 +130,7 @@ impl UniverseManager {
                 })?;
 
                 // Create DMX fixture
-                let mut dmx_fixture = DmxFixture::new(dmx_config, &venue_fixture.common, definition);
-
-                // Collect and set attribute channels for the groups this fixture belongs to
-                let mut attribute_receivers = HashMap::new();
-                for group_name in &venue_fixture.common.groups {
-                    if let Some(group_channels) = self.attribute_channels.get(group_name) {
-                        for (attribute_name, sender) in group_channels {
-                            let receiver = sender.subscribe();
-                            attribute_receivers.insert(attribute_name.clone(), receiver);
-                        }
-                    }
-                }
-                dmx_fixture.update_subscriptions(attribute_receivers);
+                let dmx_fixture = DmxFixture::new(dmx_config, &venue_fixture.common, definition);
 
                 // Add to universe
                 universe
@@ -150,19 +144,7 @@ impl UniverseManager {
                 );
 
                 // Create Neewer fixture
-                let mut neewer_fixture = NeewerFixture::new(venue_fixture.common.name.clone(), venue_fixture.common.address.clone());
-
-                // Collect and set attribute channels for the groups this fixture belongs to
-                let mut attribute_receivers = HashMap::new();
-                for group_name in &venue_fixture.common.groups {
-                    if let Some(group_channels) = self.attribute_channels.get(group_name) {
-                        for (attribute_name, sender) in group_channels {
-                            let receiver = sender.subscribe();
-                            attribute_receivers.insert(attribute_name.clone(), receiver);
-                        }
-                    }
-                }
-                neewer_fixture.update_subscriptions(attribute_receivers);
+                let neewer_fixture = NeewerFixture::new(venue_fixture.common.name.clone(), venue_fixture.common.address.clone());
 
                 // Add to universe
                 universe
@@ -176,7 +158,7 @@ impl UniverseManager {
 
     fn update_all_fixture_subscriptions(&mut self) {
         info!("Updating subscriptions for all existing fixtures");
-        
+
         if let Some(venue) = &self.venue {
             for venue_fixture in &venue.fixtures {
                 if let Some(universe) = self.universes.get_mut(&UniverseIdentifier::from_address(&venue_fixture.common.address)) {
@@ -190,7 +172,7 @@ impl UniverseManager {
                             }
                         }
                     }
-                    
+
                     // Update the fixture's subscriptions
                     universe.update_fixture_subscriptions(&venue_fixture.common.name, attribute_receivers);
                 }
