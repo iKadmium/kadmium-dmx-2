@@ -2,7 +2,6 @@ use bytes::BytesMut;
 use kadmium_dmx_shared::{Message, NeewerLightParams, NeewerUpdate};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
-use tracing::error;
 
 use crate::fixtures::{
     fixture::{Fixture, FixtureAccessors},
@@ -27,6 +26,10 @@ impl NeewerUniverse {
 
 impl Universe for NeewerUniverse {
     type FixtureType = NeewerFixture;
+
+    fn fixtures_mut(&mut self) -> &mut Vec<(Self::FixtureType, Vec<String>)> {
+        &mut self.fixtures
+    }
 
     fn add_fixture(&mut self, fixture: Self::FixtureType, groups: Vec<String>) {
         self.update_message.fixtures.insert(
@@ -56,13 +59,6 @@ impl Universe for NeewerUniverse {
             }
             fixture.update_subscriptions(fixture_receivers);
         }
-    }
-
-    fn update(&mut self) -> std::io::Result<()> {
-        for (fixture, _) in &mut self.fixtures {
-            fixture.update()?;
-        }
-        Ok(())
     }
 
     fn render(&mut self) -> std::io::Result<()> {

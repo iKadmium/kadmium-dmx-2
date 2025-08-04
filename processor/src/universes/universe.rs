@@ -8,6 +8,8 @@ use crate::fixtures::fixture::{Fixture, FixtureAccessors};
 pub trait Universe: Send + Sync {
     type FixtureType: Fixture + FixtureAccessors;
 
+    fn fixtures_mut(&mut self) -> &mut Vec<(Self::FixtureType, Vec<String>)>;
+
     /// Add a fixture to this universe along with its group memberships
     fn add_fixture(&mut self, fixture: Self::FixtureType, groups: Vec<String>);
 
@@ -16,7 +18,12 @@ pub trait Universe: Send + Sync {
     fn update_all_fixture_subscriptions(&mut self, group_channels: &HashMap<String, HashMap<String, broadcast::Sender<f32>>>);
 
     /// Update all fixtures in the universe
-    fn update(&mut self) -> std::io::Result<()>;
+    fn update(&mut self) -> std::io::Result<()> {
+        for (fixture, _) in self.fixtures_mut() {
+            fixture.update()?;
+        }
+        Ok(())
+    }
 
     /// Render all fixtures in the universe
     fn render(&mut self) -> std::io::Result<()>;

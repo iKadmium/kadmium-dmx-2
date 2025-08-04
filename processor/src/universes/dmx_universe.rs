@@ -1,7 +1,6 @@
 use bytes::{BufMut, BytesMut};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
-use tracing::error;
 
 use crate::fixtures::{
     dmx_fixture::DmxFixture,
@@ -29,6 +28,10 @@ impl DmxUniverse {
 impl Universe for DmxUniverse {
     type FixtureType = DmxFixture;
 
+    fn fixtures_mut(&mut self) -> &mut Vec<(Self::FixtureType, Vec<String>)> {
+        &mut self.fixtures
+    }
+
     fn add_fixture(&mut self, fixture: Self::FixtureType, groups: Vec<String>) {
         self.fixtures.push((fixture, groups));
     }
@@ -50,19 +53,10 @@ impl Universe for DmxUniverse {
         }
     }
 
-    fn update(&mut self) -> std::io::Result<()> {
-        for (fixture, _) in &mut self.fixtures {
-            fixture.update()?;
-        }
-        Ok(())
-    }
-
     fn render(&mut self) -> std::io::Result<()> {
         for (fixture, _) in &mut self.fixtures {
             // Serialize each fixture's DMX channels into the buffer
-            if let Err(e) = fixture.render(&mut self.channels) {
-                error!("Error rendering fixture: {e}");
-            }
+            fixture.render(&mut self.channels)?;
         }
         Ok(())
     }
