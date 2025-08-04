@@ -26,6 +26,7 @@ pub struct DmxFixture {
     pub personality: String,
     subscriptions: HashMap<String, broadcast::Receiver<f32>>,
     pub effects: Vec<Box<dyn Effect<DmxFixture> + Send + Sync>>,
+    pub groups: Vec<String>,
 }
 
 // Generate the accessor methods
@@ -74,6 +75,7 @@ impl DmxFixture {
             model: config.model.clone(),
             personality: config.personality.clone(),
             subscriptions,
+            groups: common.groups.clone(),
         }
     }
 }

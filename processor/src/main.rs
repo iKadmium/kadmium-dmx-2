@@ -9,11 +9,14 @@ use std::env;
 
 use anyhow::Result;
 use bytes::BytesMut;
+use rumqttc::QoS;
 use tokio::sync::mpsc;
 use tracing::{error, info};
 
 use mqtt_manager::{MqttManager, MqttMessage};
 use universe_manager::UniverseManager;
+
+use crate::universes::universe::Universe;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -70,24 +73,51 @@ async fn main() -> Result<()> {
             }
         }
 
-        // Render and publish universe updates
-        for (_, universe_container) in universe_manager.universes_iter_mut() {
-            let mut send_payload = BytesMut::with_capacity(512); // Placeholder payload, adjust as needed
+        // Render and publish universe updates - DMX universes
+        for (_, dmx_universe) in universe_manager.dmx_universes_iter_mut() {
+            let mut send_payload = BytesMut::with_capacity(512);
 
-            if let Err(e) = universe_container.update() {
-                error!("Failed to update universe: {}", e);
+            if let Err(e) = dmx_universe.update() {
+                error!("Failed to update DMX universe: {}", e);
                 continue;
             }
 
-            if let Err(e) = universe_container.render() {
-                error!("Failed to render universe: {}", e);
+            if let Err(e) = dmx_universe.render() {
+                error!("Failed to render DMX universe: {}", e);
                 continue;
             }
 
-            let topic = match universe_container.get_update(&mut send_payload) {
+            let topic = match dmx_universe.get_update(&mut send_payload) {
                 Ok(topic) => topic,
                 Err(e) => {
-                    error!("Failed to get update for universe: {}", e);
+                    error!("Failed to get update for DMX universe: {}", e);
+                    continue;
+                }
+            };
+
+            if let Err(e) = mqtt_client.publish(&topic, QoS::ExactlyOnce, false, send_payload).await {
+                error!("Failed to publish DMX universe update: {}", e);
+            }
+        }
+
+        // Render and publish universe updates - Neewer universes
+        for (_, neewer_universe) in universe_manager.neewer_universes_iter_mut() {
+            let mut send_payload = BytesMut::with_capacity(512);
+
+            if let Err(e) = neewer_universe.update() {
+                error!("Failed to update Neewer universe: {}", e);
+                continue;
+            }
+
+            if let Err(e) = neewer_universe.render() {
+                error!("Failed to render Neewer universe: {}", e);
+                continue;
+            }
+
+            let topic = match neewer_universe.get_update(&mut send_payload) {
+                Ok(topic) => topic,
+                Err(e) => {
+                    error!("Failed to get update for Neewer universe: {}", e);
                     continue;
                 }
             };

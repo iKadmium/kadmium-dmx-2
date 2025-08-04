@@ -9,7 +9,7 @@ use crate::{
     universes::{
         dmx_universe::DmxUniverse,
         neewer_universe::NeewerUniverse,
-        universe_container::UniverseContainer,
+        universe::Universe,
         universe_type::{UniverseIdentifier, UniverseType},
     },
 };
@@ -23,10 +23,9 @@ pub struct UniverseManager {
     attribute_channels: HashMap<String, HashMap<String, broadcast::Sender<f32>>>,
     midi_map: Option<MidiMap>,
     venue: Option<Venue>,
-    universes: UniverseMap,
+    dmx_universes: HashMap<UniverseIdentifier, DmxUniverse>,
+    neewer_universes: HashMap<UniverseIdentifier, NeewerUniverse>,
 }
-
-type UniverseMap = HashMap<UniverseIdentifier, UniverseContainer>;
 
 impl UniverseManager {
     pub fn new() -> Self {
@@ -34,7 +33,8 @@ impl UniverseManager {
             attribute_channels: HashMap::new(),
             midi_map: None,
             venue: None,
-            universes: HashMap::new(),
+            dmx_universes: HashMap::new(),
+            neewer_universes: HashMap::new(),
         }
     }
 
@@ -72,7 +72,8 @@ impl UniverseManager {
         info!("Updating venue configuration: {}", venue.name);
 
         // Clear existing fixtures and groups
-        self.universes.clear();
+        self.dmx_universes.clear();
+        self.neewer_universes.clear();
 
         // Create universes based on venue configuration
         self.create_universes(&venue)?;
@@ -94,26 +95,25 @@ impl UniverseManager {
     }
 
     fn create_universes(&mut self, venue: &Venue) -> Result<()> {
-        // Add DMX universes (ArtNet and sACN)
+        // Add DMX universes (ArtNet and sACN) and Neewer universes
         for venue_fixture in &venue.fixtures {
             let identifier = UniverseIdentifier::from_address(&venue_fixture.common.address);
-            self.universes.entry(identifier).or_insert_with(|| match identifier.universe_type {
-                UniverseType::Sacn => UniverseContainer::Dmx(DmxUniverse::new(identifier.universe_number)),
-                UniverseType::ArtNet => UniverseContainer::Dmx(DmxUniverse::new(identifier.universe_number)),
-                UniverseType::Neewer => UniverseContainer::Neewer(NeewerUniverse::new()),
-            });
+            match identifier.universe_type {
+                UniverseType::Sacn | UniverseType::ArtNet => {
+                    self.dmx_universes
+                        .entry(identifier)
+                        .or_insert_with(|| DmxUniverse::new(identifier.universe_number));
+                }
+                UniverseType::Neewer => {
+                    self.neewer_universes.entry(identifier).or_insert_with(NeewerUniverse::new);
+                }
+            }
         }
         Ok(())
     }
 
     fn create_fixture(&mut self, venue_fixture: &VenueFixture, definitions: &DefinitionsSet) -> Result<()> {
-        let universe = self
-            .universes
-            .get_mut(&UniverseIdentifier::from_address(&venue_fixture.common.address))
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                format!("DMX universe not found: {:?}", venue_fixture.common.address),
-            ))?;
+        let identifier = UniverseIdentifier::from_address(&venue_fixture.common.address);
 
         match &venue_fixture.fixture_type {
             VenueFixtureType::Dmx(dmx_config) => {
@@ -132,10 +132,14 @@ impl UniverseManager {
                 // Create DMX fixture
                 let dmx_fixture = DmxFixture::new(dmx_config, &venue_fixture.common, definition);
 
-                // Add to universe
-                universe
-                    .add_dmx_fixture(dmx_fixture)
-                    .map_err(|e| anyhow::anyhow!("Failed to add DMX fixture to universe: {}", e))?;
+                // Add to DMX universe
+                let universe = self.dmx_universes.get_mut(&identifier).ok_or(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("DMX universe not found: {:?}", venue_fixture.common.address),
+                ))?;
+
+                let groups = dmx_fixture.groups.clone();
+                universe.add_fixture(dmx_fixture, groups);
             }
             VenueFixtureType::Neewer => {
                 info!(
@@ -144,12 +148,16 @@ impl UniverseManager {
                 );
 
                 // Create Neewer fixture
-                let neewer_fixture = NeewerFixture::new(venue_fixture.common.name.clone(), venue_fixture.common.address.clone());
+                let neewer_fixture = NeewerFixture::new(venue_fixture.common.clone());
 
-                // Add to universe
-                universe
-                    .add_neewer_fixture(neewer_fixture)
-                    .map_err(|e| anyhow::anyhow!("Failed to add Neewer fixture to universe: {}", e))?;
+                // Add to Neewer universe
+                let universe = self.neewer_universes.get_mut(&identifier).ok_or(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("Neewer universe not found: {:?}", venue_fixture.common.address),
+                ))?;
+
+                let groups = neewer_fixture.groups.clone();
+                universe.add_fixture(neewer_fixture, groups);
             }
         }
 
@@ -160,21 +168,44 @@ impl UniverseManager {
         info!("Updating subscriptions for all existing fixtures");
 
         if let Some(venue) = &self.venue {
+            // Group fixtures by universe and collect all groups for each universe
+            let mut dmx_universe_groups: HashMap<UniverseIdentifier, Vec<String>> = HashMap::new();
+            let mut neewer_universe_groups: HashMap<UniverseIdentifier, Vec<String>> = HashMap::new();
+
             for venue_fixture in &venue.fixtures {
-                if let Some(universe) = self.universes.get_mut(&UniverseIdentifier::from_address(&venue_fixture.common.address)) {
-                    // Create new attribute receivers for this fixture's groups
-                    let mut attribute_receivers = HashMap::new();
-                    for group_name in &venue_fixture.common.groups {
-                        if let Some(group_channels) = self.attribute_channels.get(group_name) {
-                            for (attribute_name, sender) in group_channels {
-                                let receiver = sender.subscribe();
-                                attribute_receivers.insert(attribute_name.clone(), receiver);
+                let identifier = UniverseIdentifier::from_address(&venue_fixture.common.address);
+
+                match identifier.universe_type {
+                    UniverseType::Sacn | UniverseType::ArtNet => {
+                        let groups = dmx_universe_groups.entry(identifier).or_default();
+                        for group_name in &venue_fixture.common.groups {
+                            if !groups.contains(group_name) {
+                                groups.push(group_name.clone());
                             }
                         }
                     }
+                    UniverseType::Neewer => {
+                        let groups = neewer_universe_groups.entry(identifier).or_default();
+                        for group_name in &venue_fixture.common.groups {
+                            if !groups.contains(group_name) {
+                                groups.push(group_name.clone());
+                            }
+                        }
+                    }
+                }
+            }
 
-                    // Update the fixture's subscriptions
-                    universe.update_fixture_subscriptions(&venue_fixture.common.name, attribute_receivers);
+            // Update subscriptions for each DMX universe
+            for (universe_id, _groups) in dmx_universe_groups {
+                if let Some(universe) = self.dmx_universes.get_mut(&universe_id) {
+                    universe.update_all_fixture_subscriptions(&self.attribute_channels);
+                }
+            }
+
+            // Update subscriptions for each Neewer universe
+            for (universe_id, _groups) in neewer_universe_groups {
+                if let Some(universe) = self.neewer_universes.get_mut(&universe_id) {
+                    universe.update_all_fixture_subscriptions(&self.attribute_channels);
                 }
             }
         }
@@ -199,7 +230,11 @@ impl UniverseManager {
         ))
     }
 
-    pub fn universes_iter_mut(&mut self) -> impl Iterator<Item = (&UniverseIdentifier, &mut UniverseContainer)> {
-        self.universes.iter_mut()
+    pub fn dmx_universes_iter_mut(&mut self) -> impl Iterator<Item = (&UniverseIdentifier, &mut DmxUniverse)> {
+        self.dmx_universes.iter_mut()
+    }
+
+    pub fn neewer_universes_iter_mut(&mut self) -> impl Iterator<Item = (&UniverseIdentifier, &mut NeewerUniverse)> {
+        self.neewer_universes.iter_mut()
     }
 }
