@@ -12,7 +12,7 @@ use crate::universes::universe::Universe;
 #[derive(Debug)]
 pub struct NeewerUniverse {
     pub update_message: NeewerUpdate,
-    pub fixtures: Vec<(NeewerFixture, Vec<String>)>,
+    pub fixtures: Vec<NeewerFixture>,
 }
 
 impl NeewerUniverse {
@@ -27,11 +27,11 @@ impl NeewerUniverse {
 impl Universe for NeewerUniverse {
     type FixtureType = NeewerFixture;
 
-    fn fixtures_mut(&mut self) -> &mut Vec<(Self::FixtureType, Vec<String>)> {
+    fn fixtures_mut(&mut self) -> &mut Vec<Self::FixtureType> {
         &mut self.fixtures
     }
 
-    fn add_fixture(&mut self, fixture: Self::FixtureType, groups: Vec<String>) {
+    fn add_fixture(&mut self, fixture: Self::FixtureType) {
         self.update_message.fixtures.insert(
             fixture.address.to_string(),
             NeewerLightParams {
@@ -41,15 +41,15 @@ impl Universe for NeewerUniverse {
             },
         );
 
-        self.fixtures.push((fixture, groups));
+        self.fixtures.push(fixture);
     }
 
     fn update_all_fixture_subscriptions(&mut self, group_channels: &HashMap<String, HashMap<String, broadcast::Sender<f32>>>) {
         // Update each fixture with subscriptions for its specific groups
-        for (fixture, fixture_groups) in &mut self.fixtures {
+        for fixture in &mut self.fixtures {
             // Each fixture gets its own copy of receivers for its groups
             let mut fixture_receivers = HashMap::new();
-            for group_name in fixture_groups {
+            for group_name in &fixture.groups {
                 if let Some(group_attrs) = group_channels.get(group_name) {
                     for (attribute_name, sender) in group_attrs {
                         let receiver = sender.subscribe();
@@ -62,7 +62,7 @@ impl Universe for NeewerUniverse {
     }
 
     fn render(&mut self) -> std::io::Result<()> {
-        for (fixture, _) in &mut self.fixtures {
+        for fixture in &mut self.fixtures {
             let render_target = self
                 .update_message
                 .fixtures

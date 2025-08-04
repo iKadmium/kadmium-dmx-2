@@ -138,8 +138,7 @@ impl UniverseManager {
                     format!("DMX universe not found: {:?}", venue_fixture.common.address),
                 ))?;
 
-                let groups = dmx_fixture.groups.clone();
-                universe.add_fixture(dmx_fixture, groups);
+                universe.add_fixture(dmx_fixture);
             }
             VenueFixtureType::Neewer => {
                 info!(
@@ -156,8 +155,7 @@ impl UniverseManager {
                     format!("Neewer universe not found: {:?}", venue_fixture.common.address),
                 ))?;
 
-                let groups = neewer_fixture.groups.clone();
-                universe.add_fixture(neewer_fixture, groups);
+                universe.add_fixture(neewer_fixture);
             }
         }
 

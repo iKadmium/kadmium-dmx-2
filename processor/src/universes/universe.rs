@@ -8,10 +8,10 @@ use crate::fixtures::fixture::{Fixture, FixtureAccessors};
 pub trait Universe: Send + Sync {
     type FixtureType: Fixture + FixtureAccessors;
 
-    fn fixtures_mut(&mut self) -> &mut Vec<(Self::FixtureType, Vec<String>)>;
+    fn fixtures_mut(&mut self) -> &mut Vec<Self::FixtureType>;
 
     /// Add a fixture to this universe along with its group memberships
-    fn add_fixture(&mut self, fixture: Self::FixtureType, groups: Vec<String>);
+    fn add_fixture(&mut self, fixture: Self::FixtureType);
 
     /// Update subscriptions for all fixtures based on current channel map
     /// This is the implementation-specific version
@@ -19,7 +19,7 @@ pub trait Universe: Send + Sync {
 
     /// Update all fixtures in the universe
     fn update(&mut self) -> std::io::Result<()> {
-        for (fixture, _) in self.fixtures_mut() {
+        for fixture in self.fixtures_mut() {
             fixture.update()?;
         }
         Ok(())

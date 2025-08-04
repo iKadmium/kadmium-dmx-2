@@ -11,7 +11,7 @@ use crate::universes::universe::Universe;
 #[derive(Debug)]
 pub struct DmxUniverse {
     pub universe_number: u16,
-    pub fixtures: Vec<(DmxFixture, Vec<String>)>, // (fixture, groups)
+    pub fixtures: Vec<DmxFixture>, // (fixture, groups)
     pub channels: Box<[u8; 512]>,
 }
 
@@ -28,20 +28,20 @@ impl DmxUniverse {
 impl Universe for DmxUniverse {
     type FixtureType = DmxFixture;
 
-    fn fixtures_mut(&mut self) -> &mut Vec<(Self::FixtureType, Vec<String>)> {
+    fn fixtures_mut(&mut self) -> &mut Vec<Self::FixtureType> {
         &mut self.fixtures
     }
 
-    fn add_fixture(&mut self, fixture: Self::FixtureType, groups: Vec<String>) {
-        self.fixtures.push((fixture, groups));
+    fn add_fixture(&mut self, fixture: Self::FixtureType) {
+        self.fixtures.push(fixture);
     }
 
     fn update_all_fixture_subscriptions(&mut self, group_channels: &HashMap<String, HashMap<String, broadcast::Sender<f32>>>) {
         // Update each fixture with subscriptions for its specific groups
-        for (fixture, fixture_groups) in &mut self.fixtures {
+        for fixture in &mut self.fixtures {
             // Each fixture gets its own copy of receivers for its groups
             let mut fixture_receivers = HashMap::new();
-            for group_name in fixture_groups {
+            for group_name in &fixture.groups {
                 if let Some(group_attrs) = group_channels.get(group_name) {
                     for (attribute_name, sender) in group_attrs {
                         let receiver = sender.subscribe();
@@ -54,7 +54,7 @@ impl Universe for DmxUniverse {
     }
 
     fn render(&mut self) -> std::io::Result<()> {
-        for (fixture, _) in &mut self.fixtures {
+        for fixture in &mut self.fixtures {
             // Serialize each fixture's DMX channels into the buffer
             fixture.render(&mut self.channels)?;
         }
