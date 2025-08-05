@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use kadmium_dmx_shared::dmx_fixtures::fixture_personality::FixturePersonality;
 
 use crate::{
-    effects::effect::Effect,
+    effects::{attribute::Attribute, effect::Effect},
     fixtures::{
         dmx_fixture::{self, DmxFixture},
         fixture,
@@ -15,10 +17,10 @@ pub struct HsvToRgb {
     blue_index: usize,
 }
 impl HsvToRgb {
-    pub(crate) fn new(personality: &FixturePersonality, address: u16) -> Self {
-        let red_index = (personality.channels.get("Red").unwrap().address + address) as usize;
-        let green_index = (personality.channels.get("Green").unwrap().address + address) as usize;
-        let blue_index = (personality.channels.get("Blue").unwrap().address + address) as usize;
+    pub(crate) fn new(personality: &FixturePersonality) -> Self {
+        let red_index = personality.channels.get("Red").unwrap().address as usize;
+        let green_index = personality.channels.get("Green").unwrap().address as usize;
+        let blue_index = personality.channels.get("Blue").unwrap().address as usize;
 
         Self {
             red_index,
@@ -29,12 +31,16 @@ impl HsvToRgb {
 }
 
 impl Effect<DmxFixture> for HsvToRgb {
-    fn render(&self, fixture: &DmxFixture, target: &mut <dmx_fixture::DmxFixture as fixture::Fixture>::RenderTarget<'_>) -> std::io::Result<()> {
+    fn render(
+        &self,
+        attributes: &HashMap<String, Attribute>,
+        target: &mut <dmx_fixture::DmxFixture as fixture::Fixture>::RenderTarget<'_>,
+    ) -> std::io::Result<()> {
         let buffer = target;
 
-        let h = self.get_attribute_value(&fixture.attributes, "Hue")?;
-        let s = self.get_attribute_value(&fixture.attributes, "Saturation")?;
-        let v = self.get_attribute_value(&fixture.attributes, "Brightness")?;
+        let h = self.get_attribute_value(attributes, "Hue")?;
+        let s = self.get_attribute_value(attributes, "Saturation")?;
+        let v = self.get_attribute_value(attributes, "Brightness")?;
 
         let i = (h * 6.0).floor() as u32;
         let f = h * 6.0 - i as f32;

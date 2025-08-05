@@ -5,14 +5,19 @@
         "location": {
             "city": "Some town"
         },
-        "fixtures": [
+        "universes": [
             {
-                "name": "Some fixture",
                 "type": "neewer",
-                "address": {
-                    "type": "bluetooth",
-                    "uuid": "CB:11:33:33:A3:67"
-                },
+                "address": "CB:11:33:33:A3:67",
+                "fixtures": [
+                    {
+                        "type": "neewer",
+                        "name": "Some fixture",
+                        "groups": [
+                            "Vocalist"
+                        ]
+                    }
+                ],
                 "groups": [
                     "Vocalist"
                 ]

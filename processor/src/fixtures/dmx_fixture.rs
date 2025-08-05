@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 
 use kadmium_dmx_shared::{
-    FixtureAddress, VenueDmxFixture,
+    VenueDmxFixture,
     dmx_fixtures::{fixture_definition::FixtureDefinition, fixture_personality::FixturePersonality},
-    venue_fixture::CommonFixtureProperties,
 };
-use tokio::sync::broadcast;
 
 use crate::{
     effects::{attribute::Attribute, dmx_hsv_to_rgb::HsvToRgb, effect::Effect},
@@ -17,14 +15,10 @@ use crate::{
 #[allow(dead_code)]
 pub struct DmxFixture {
     pub name: String,
-    pub dmx_address: u16,
-    pub dmx_universe: u16,
-    channel_indices: HashMap<String, usize>,
     pub attributes: HashMap<String, Attribute>,
     pub manufacturer: String,
     pub model: String,
     pub personality: String,
-    subscriptions: HashMap<String, broadcast::Receiver<f32>>,
     pub effects: Vec<Box<dyn Effect<DmxFixture> + Send + Sync>>,
     pub groups: Vec<String>,
 }
@@ -33,7 +27,7 @@ pub struct DmxFixture {
 fixture_accessors!(DmxFixture);
 
 impl DmxFixture {
-    pub fn new(config: &VenueDmxFixture, common: &CommonFixtureProperties, definition: &FixtureDefinition) -> Self {
+    pub fn new(config: &VenueDmxFixture, definition: &FixtureDefinition) -> Self {
         let mut channel_indices = HashMap::new();
         let mut attributes = HashMap::new();
 
@@ -42,17 +36,11 @@ impl DmxFixture {
             .get(&config.personality)
             .expect("Personality not found in fixture definition");
 
-        let (dmx_address, dmx_universe) = match common.address {
-            FixtureAddress::Sacn { universe, channel } => (channel, universe),
-            FixtureAddress::ArtNet { universe, channel } => (channel, universe),
-            _ => panic!("DMX fixtures must use DMX addresses"),
-        };
-
         for (name, channel) in &personality.channels {
-            channel_indices.insert(name.clone(), (channel.address + dmx_address) as usize);
+            channel_indices.insert(name.clone(), channel.address as usize);
         }
 
-        let effects = Self::create_effects(personality, &dmx_address);
+        let effects = Self::create_effects(personality);
 
         for effect in &effects {
             for attribute in effect.get_attributes() {
@@ -62,33 +50,26 @@ impl DmxFixture {
             }
         }
 
-        let subscriptions = HashMap::new();
-
         DmxFixture {
-            name: common.name.clone(),
-            dmx_address,
-            dmx_universe,
-            channel_indices,
+            name: config.common.name.clone(),
             attributes,
             effects,
             manufacturer: config.manufacturer.clone(),
             model: config.model.clone(),
             personality: config.personality.clone(),
-            subscriptions,
-            groups: common.groups.clone(),
+            groups: config.common.groups.clone(),
         }
     }
 }
 
 impl Fixture for DmxFixture {
-    type RenderTarget<'a> = [u8; 512];
-    type AddressType<'a> = u16;
+    type RenderTarget<'a> = [u8];
 
-    fn create_effects(personality: &FixturePersonality, address: &Self::AddressType<'_>) -> Vec<Box<dyn Effect<Self> + Send + Sync>> {
+    fn create_effects(personality: &FixturePersonality) -> Vec<Box<dyn Effect<Self> + Send + Sync>> {
         let mut effects: Vec<Box<dyn Effect<Self> + Send + Sync>> = Vec::new();
 
         if HsvToRgb::valid_for_fixture(personality) {
-            effects.push(Box::new(HsvToRgb::new(personality, *address)));
+            effects.push(Box::new(HsvToRgb::new(personality)));
         }
         effects
     }

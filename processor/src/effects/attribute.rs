@@ -2,6 +2,7 @@ use tokio::sync::watch;
 
 #[derive(Debug)]
 pub struct Attribute {
+    #[allow(dead_code)]
     pub name: String,
     rx: watch::Receiver<f32>,
     tx: watch::Sender<f32>,
@@ -19,5 +20,9 @@ impl Attribute {
 
     pub fn get_value(&self) -> f32 {
         *self.rx.borrow()
+    }
+
+    pub fn get_sender(&self) -> watch::Sender<f32> {
+        self.tx.clone()
     }
 }

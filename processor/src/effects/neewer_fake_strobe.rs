@@ -1,9 +1,12 @@
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 
-use kadmium_dmx_shared::dmx_fixtures::fixture_personality::FixturePersonality;
+use kadmium_dmx_shared::{NeewerLightParams, dmx_fixtures::fixture_personality::FixturePersonality};
 use tracing::info;
 
-use crate::{effects::effect::Effect, fixtures::neewer_fixture::NeewerFixture};
+use crate::{
+    effects::{attribute::Attribute, effect::Effect},
+    fixtures::neewer_fixture::NeewerFixture,
+};
 
 #[derive(Debug)]
 pub struct NeewerFakeStrobe {
@@ -31,12 +34,8 @@ impl Effect<NeewerFixture> for NeewerFakeStrobe {
         Ok(())
     }
 
-    fn render(&self, fixture: &NeewerFixture, target: &mut <NeewerFixture as crate::fixtures::fixture::Fixture>::RenderTarget<'_>) -> std::io::Result<()> {
-        let enabled = if let Some(attr) = fixture.attributes.get("Strobe") {
-            attr.get_value() == 1.0
-        } else {
-            false
-        };
+    fn render(&self, attributes: &HashMap<String, Attribute>, target: &mut NeewerLightParams) -> std::io::Result<()> {
+        let enabled = self.get_attribute_value(attributes, "Strobe")? == 1.0;
 
         if !self.on && enabled {
             info!("NeewerFakeStrobe: Turning off strobe effect");

@@ -1,10 +1,9 @@
-use bytes::{BufMut, BytesMut};
-use std::collections::HashMap;
-use tokio::sync::broadcast;
+use kadmium_dmx_shared::{DefinitionsSet, VenueDmxFixture};
+use rumqttc::{AsyncClient, ClientError, QoS};
 
 use crate::fixtures::{
     dmx_fixture::DmxFixture,
-    fixture::{Fixture, FixtureAccessors},
+    fixture::Fixture,
 };
 use crate::universes::universe::Universe;
 
@@ -12,16 +11,25 @@ use crate::universes::universe::Universe;
 pub struct DmxUniverse {
     pub universe_number: u16,
     pub fixtures: Vec<DmxFixture>, // (fixture, groups)
-    pub channels: Box<[u8; 512]>,
+    pub channels: [u8; 512],
 }
 
 impl DmxUniverse {
-    pub fn new(universe_number: u16) -> Self {
-        Self {
+    pub fn new(universe_number: u16, fixtures: Vec<VenueDmxFixture>, definitions: &DefinitionsSet) -> std::io::Result<Self> {
+        let fixtures = fixtures
+            .into_iter()
+            .filter_map(|fixture| {
+                definitions
+                    .get(&(fixture.manufacturer.clone(), fixture.model.clone()))
+                    .map(|definition| DmxFixture::new(&fixture, definition))
+            })
+            .collect();
+
+        Ok(Self {
             universe_number,
-            fixtures: Vec::new(),
-            channels: Box::new([0; 512]), // Initialize all channels to 0
-        }
+            fixtures,
+            channels: [0; 512], // Initialize all channels to 0
+        })
     }
 }
 
@@ -32,27 +40,6 @@ impl Universe for DmxUniverse {
         &mut self.fixtures
     }
 
-    fn add_fixture(&mut self, fixture: Self::FixtureType) {
-        self.fixtures.push(fixture);
-    }
-
-    fn update_all_fixture_subscriptions(&mut self, group_channels: &HashMap<String, HashMap<String, broadcast::Sender<f32>>>) {
-        // Update each fixture with subscriptions for its specific groups
-        for fixture in &mut self.fixtures {
-            // Each fixture gets its own copy of receivers for its groups
-            let mut fixture_receivers = HashMap::new();
-            for group_name in &fixture.groups {
-                if let Some(group_attrs) = group_channels.get(group_name) {
-                    for (attribute_name, sender) in group_attrs {
-                        let receiver = sender.subscribe();
-                        fixture_receivers.insert(attribute_name.clone(), receiver);
-                    }
-                }
-            }
-            fixture.update_subscriptions(fixture_receivers);
-        }
-    }
-
     fn render(&mut self) -> std::io::Result<()> {
         for fixture in &mut self.fixtures {
             // Serialize each fixture's DMX channels into the buffer
@@ -61,8 +48,15 @@ impl Universe for DmxUniverse {
         Ok(())
     }
 
-    fn get_update(&self, buf: &mut BytesMut) -> std::io::Result<String> {
-        buf.put_slice(&self.channels[..]);
-        Ok(format!("dmx/universe/{}", self.universe_number))
+    async fn send_update(&self, client: &AsyncClient) -> Result<(), ClientError> {
+        client
+            .publish(
+                format!("dmx/universe/{}", self.universe_number),
+                QoS::AtLeastOnce,
+                false,
+                self.channels[..].to_vec(),
+            )
+            .await?;
+        Ok(())
     }
 }

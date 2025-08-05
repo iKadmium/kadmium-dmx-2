@@ -15,7 +15,7 @@ pub trait Effect<F: Fixture>: Send + Sync + Debug {
     fn update(&mut self) -> std::io::Result<()> {
         Ok(())
     }
-    fn render(&self, fixture: &F, target: &mut F::RenderTarget<'_>) -> std::io::Result<()>;
+    fn render(&self, attributes: &HashMap<String, Attribute>, target: &mut F::RenderTarget<'_>) -> std::io::Result<()>;
     fn valid_for_fixture(personality: &FixturePersonality) -> bool
     where
         Self: Sized;

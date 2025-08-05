@@ -1,25 +1,29 @@
 use bytes::BytesMut;
-use kadmium_dmx_shared::{Message, NeewerLightParams, NeewerUpdate};
-use std::collections::HashMap;
-use tokio::sync::broadcast;
+use kadmium_dmx_shared::{Message, NeewerLightParams, VenueFixtureCommon};
+use rumqttc::{ClientError, QoS};
 
 use crate::fixtures::{
-    fixture::{Fixture, FixtureAccessors},
+    fixture::Fixture,
     neewer_fixture::NeewerFixture,
 };
 use crate::universes::universe::Universe;
 
 #[derive(Debug)]
 pub struct NeewerUniverse {
-    pub update_message: NeewerUpdate,
+    pub update_message: NeewerLightParams,
     pub fixtures: Vec<NeewerFixture>,
+    topic: String,
+    message: BytesMut,
 }
 
 impl NeewerUniverse {
-    pub fn new() -> Self {
+    pub fn new(address: String, fixture: VenueFixtureCommon) -> Self {
+        let topic = format!("bt/neewer/update/{address}");
         NeewerUniverse {
-            update_message: NeewerUpdate::default(),
-            fixtures: Vec::new(),
+            update_message: NeewerLightParams::default(),
+            fixtures: vec![NeewerFixture::new(fixture)],
+            topic,
+            message: BytesMut::new(),
         }
     }
 }
@@ -31,52 +35,18 @@ impl Universe for NeewerUniverse {
         &mut self.fixtures
     }
 
-    fn add_fixture(&mut self, fixture: Self::FixtureType) {
-        self.update_message.fixtures.insert(
-            fixture.address.to_string(),
-            NeewerLightParams {
-                hue: 0,
-                saturation: 0,
-                brightness: 0,
-            },
-        );
-
-        self.fixtures.push(fixture);
-    }
-
-    fn update_all_fixture_subscriptions(&mut self, group_channels: &HashMap<String, HashMap<String, broadcast::Sender<f32>>>) {
-        // Update each fixture with subscriptions for its specific groups
-        for fixture in &mut self.fixtures {
-            // Each fixture gets its own copy of receivers for its groups
-            let mut fixture_receivers = HashMap::new();
-            for group_name in &fixture.groups {
-                if let Some(group_attrs) = group_channels.get(group_name) {
-                    for (attribute_name, sender) in group_attrs {
-                        let receiver = sender.subscribe();
-                        fixture_receivers.insert(attribute_name.clone(), receiver);
-                    }
-                }
-            }
-            fixture.update_subscriptions(fixture_receivers);
-        }
-    }
-
     fn render(&mut self) -> std::io::Result<()> {
+        self.message.clear();
         for fixture in &mut self.fixtures {
-            let render_target = self
-                .update_message
-                .fixtures
-                .get_mut(&fixture.address)
-                .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, format!("No render target found for fixture {}", fixture.name)))?;
-
-            fixture.render(render_target)?;
+            fixture.render(&mut self.update_message)?;
         }
+        self.update_message.encode(&mut self.message)?;
         Ok(())
     }
 
-    fn get_update(&self, buf: &mut BytesMut) -> std::io::Result<String> {
-        self.update_message.encode(buf).map_err(std::io::Error::other)?;
-
-        Ok("bt/neewer".to_string())
+    async fn send_update(&self, mqtt_client: &rumqttc::AsyncClient) -> Result<(), ClientError> {
+        mqtt_client
+            .publish_bytes(self.topic.clone(), QoS::AtLeastOnce, false, self.message.clone().freeze())
+            .await
     }
 }

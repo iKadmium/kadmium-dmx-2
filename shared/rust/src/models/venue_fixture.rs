@@ -1,29 +1,24 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{FixtureAddress, VenueDmxFixture};
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CommonFixtureProperties {
+pub struct VenueFixtureCommon {
     pub name: String,
-    pub address: FixtureAddress,
     pub groups: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-#[serde(rename_all = "camelCase")]
-pub struct VenueFixture {
+pub struct VenueDmxFixture {
     #[serde(flatten)]
-    pub common: CommonFixtureProperties,
-    #[serde(flatten)]
-    pub fixture_type: VenueFixtureType,
+    pub common: VenueFixtureCommon,
+
+    pub manufacturer: String,
+    pub model: String,
+    pub personality: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-#[serde(rename_all = "camelCase")]
-pub enum VenueFixtureType {
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum VenueFixture {
     Dmx(VenueDmxFixture),
-    Neewer,
+    Neewer(VenueFixtureCommon),
 }

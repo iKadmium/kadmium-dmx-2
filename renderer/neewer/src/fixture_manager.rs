@@ -4,7 +4,7 @@ use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
 use crate::neewer_fixture::NeweerFixture;
-use kadmium_dmx_shared::NeewerUpdate;
+use kadmium_dmx_shared::NeewerLightParams;
 
 /// Commands that can be sent to the FixtureManager
 #[derive(Debug)]
@@ -13,7 +13,7 @@ pub enum FixtureManagerCommand {
     /// Update the collection of fixtures based on venue configuration
     UpdateVenue(Vec<NeweerFixture>),
     /// Update a specific fixture with new lighting parameters
-    UpdateFixture(NeewerUpdate),
+    UpdateFixture(String, NeewerLightParams),
     /// Get the current list of fixture addresses (for MQTT subscription)
     GetFixtureAddresses(mpsc::Sender<Vec<String>>),
 }
@@ -46,8 +46,8 @@ impl FixtureManager {
                 FixtureManagerCommand::UpdateVenue(fixtures) => {
                     self.handle_venue_update(fixtures).await;
                 }
-                FixtureManagerCommand::UpdateFixture(update) => {
-                    self.handle_fixture_update(update).await;
+                FixtureManagerCommand::UpdateFixture(address, light_params) => {
+                    self.handle_fixture_update(address, light_params).await;
                 }
                 FixtureManagerCommand::GetFixtureAddresses(response_tx) => {
                     let addresses: Vec<String> = self.fixtures.keys().cloned().collect();
@@ -80,19 +80,17 @@ impl FixtureManager {
     }
 
     /// Handle fixture lighting updates
-    async fn handle_fixture_update(&mut self, update: NeewerUpdate) {
-        for (bt_address, light_params) in update.fixtures {
-            debug!(
-                "Updating fixture {} with H:{} S:{} B:{}",
-                bt_address, light_params.hue, light_params.saturation, light_params.brightness
-            );
+    async fn handle_fixture_update(&mut self, address: String, light_params: NeewerLightParams) {
+        debug!(
+            "Updating fixture {} with H:{} S:{} B:{}",
+            address, light_params.hue, light_params.saturation, light_params.brightness
+        );
 
-            if let Some(fixture) = self.fixtures.get(&bt_address) {
-                // Send update to the fixture's task
-                fixture.update_color(light_params).await;
-            } else {
-                warn!("Received update for unknown fixture: {}", bt_address);
-            }
+        if let Some(fixture) = self.fixtures.get(&address) {
+            // Send update to the fixture's task
+            fixture.update_color(light_params).await;
+        } else {
+            warn!("Received update for unknown fixture: {}", address);
         }
     }
 }

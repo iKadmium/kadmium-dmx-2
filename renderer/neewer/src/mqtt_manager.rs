@@ -1,7 +1,7 @@
 use anyhow::Result;
 use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter};
 use btleplug::platform::Manager;
-use kadmium_dmx_shared::venue_fixture::VenueFixtureType;
+use kadmium_dmx_shared::universes::universe_identifier::UniverseIdentifier;
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS};
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -11,8 +11,7 @@ use tracing::{debug, error, info, warn};
 use crate::fixture_manager::FixtureManagerCommand;
 use crate::neewer_fixture::NeweerFixture;
 use kadmium_dmx_shared::{
-    FixtureAddress, Message, NeewerScanItem, NeewerScanResult, NeewerUpdate, ScanRequest,
-    VenueUpdate,
+    Message, NeewerLightParams, NeewerScanItem, NeewerScanResult, ScanRequest, VenueUpdate,
 };
 
 /// MQTT manager that listens for venue configuration updates and fixture control messages
@@ -97,12 +96,15 @@ impl MqttManager {
                     // Handle Neewer fixture updates
                     match Self::parse_neewer_update(&publish.payload) {
                         Ok(neewer_update) => {
-                            let fixture_count = neewer_update.fixtures.len();
-                            debug!("Received Neewer update for {} fixtures", fixture_count);
+                            let address = publish.topic.split('/').nth(3).unwrap();
+                            debug!("Received Neewer update for {address} fixtures");
 
                             // Send fixture update to FixtureManager
                             if let Err(e) = fixture_manager_tx
-                                .send(FixtureManagerCommand::UpdateFixture(neewer_update))
+                                .send(FixtureManagerCommand::UpdateFixture(
+                                    address.to_string(),
+                                    neewer_update,
+                                ))
                                 .await
                             {
                                 error!("Failed to send fixture update to FixtureManager: {}", e);
@@ -150,7 +152,7 @@ impl MqttManager {
 
                 // Subscribe to neewer fixture updates topic
                 mqtt_client
-                    .subscribe("bt/neewer/update", QoS::AtLeastOnce)
+                    .subscribe("bt/neewer/update/+", QoS::AtLeastOnce)
                     .await?;
 
                 // Subscribe to neewer scan requests topic
@@ -173,16 +175,18 @@ impl MqttManager {
 
         let mut neewer_fixtures = Vec::new();
 
-        let update_fixtures = venue_update.venue.fixtures.iter();
-        let update_neewer_fixtures = update_fixtures
-            .filter(|fixture| matches!(&fixture.fixture_type, VenueFixtureType::Neewer));
+        let update_addresses = venue_update.venue.universes.iter().filter_map(|universe| {
+            if let UniverseIdentifier::Neewer { address } = &universe.identifier {
+                Some(address)
+            } else {
+                None
+            }
+        });
 
         // Extract Neewer fixtures from the venue
-        for fixture in update_neewer_fixtures {
-            if let FixtureAddress::Bluetooth { uuid } = &fixture.common.address {
-                if let Some(neewer_fixture) = NeweerFixture::from_address(uuid).await {
-                    neewer_fixtures.push(neewer_fixture);
-                }
+        for address in update_addresses {
+            if let Some(neewer_fixture) = NeweerFixture::from_address(address).await {
+                neewer_fixtures.push(neewer_fixture);
             }
         }
 
@@ -190,8 +194,8 @@ impl MqttManager {
     }
 
     /// Parse Neewer update protobuf
-    fn parse_neewer_update(payload: &[u8]) -> Result<NeewerUpdate> {
-        let update = NeewerUpdate::decode(payload)?;
+    fn parse_neewer_update(payload: &[u8]) -> Result<NeewerLightParams> {
+        let update = NeewerLightParams::decode(payload)?;
         Ok(update)
     }
 

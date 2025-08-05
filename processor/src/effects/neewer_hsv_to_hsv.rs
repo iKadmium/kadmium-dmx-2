@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use crate::{
-    effects::effect::Effect,
+    effects::{attribute::Attribute, effect::Effect},
     fixtures::{fixture::Fixture, neewer_fixture::NeewerFixture},
 };
 
@@ -7,10 +9,10 @@ use crate::{
 pub struct NeewerHsvToHsv;
 
 impl Effect<NeewerFixture> for NeewerHsvToHsv {
-    fn render(&self, fixture: &NeewerFixture, params: &mut <NeewerFixture as Fixture>::RenderTarget<'_>) -> std::io::Result<()> {
-        let hue = self.get_attribute_value(&fixture.attributes, "Hue")?;
-        let saturation = self.get_attribute_value(&fixture.attributes, "Saturation")?;
-        let brightness = self.get_attribute_value(&fixture.attributes, "Brightness")?;
+    fn render(&self, attributes: &HashMap<String, Attribute>, params: &mut <NeewerFixture as Fixture>::RenderTarget<'_>) -> std::io::Result<()> {
+        let hue = self.get_attribute_value(attributes, "Hue")?;
+        let saturation = self.get_attribute_value(attributes, "Saturation")?;
+        let brightness = self.get_attribute_value(attributes, "Brightness")?;
 
         params.hue = (hue * 360.0) as u32;
         params.saturation = (saturation * 100.0) as u32;
