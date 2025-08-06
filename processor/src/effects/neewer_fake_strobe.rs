@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::Instant};
 
 use kadmium_dmx_shared::{NeewerLightParams, dmx_fixtures::fixture_personality::FixturePersonality};
-use tracing::info;
+use tracing::trace;
 
 use crate::{
     effects::{attribute::Attribute, effect::Effect},
@@ -38,10 +38,10 @@ impl Effect<NeewerFixture> for NeewerFakeStrobe {
         let enabled = self.get_attribute_value(attributes, "Strobe")? == 1.0;
 
         if !self.on && enabled {
-            info!("NeewerFakeStrobe: Turning off strobe effect");
+            trace!("NeewerFakeStrobe: Turning off strobe effect");
             target.brightness = 0;
         } else {
-            info!("NeewerFakeStrobe: Turning on strobe effect");
+            trace!("NeewerFakeStrobe: Turning on strobe effect");
         }
 
         Ok(())

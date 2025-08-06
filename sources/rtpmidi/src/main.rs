@@ -8,7 +8,7 @@ use rumqttc::{AsyncClient, Event, Packet, QoS};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, trace, warn};
 
 #[tokio::main]
 async fn main() {
@@ -124,8 +124,9 @@ async fn handle_midi_message(
     midi_map: Arc<RwLock<MidiMap>>,
     mqtt_client: AsyncClient,
 ) {
-    // Extract MIDI data - assuming it's a control change message
+    trace!("Received MIDI message: {:?}", event);
 
+    // Extract MIDI data - assuming it's a control change message
     if let MidiMessage::ControlChange(channel, cc, value) = event {
         // Check if it's a Control Change message (status byte 0xB0-0xBF)
 
@@ -147,7 +148,7 @@ async fn handle_midi_message(
             {
                 error!("Failed to publish MQTT message to {topic}: {e}");
             } else {
-                info!("Published {normalized_value} to {topic}");
+                trace!("Published {normalized_value} to {topic}");
             }
         }
     }

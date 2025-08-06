@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{Result, anyhow};
 use tokio::sync::watch;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 use crate::fixtures::fixture::FixtureAccessors;
 use crate::universes::{dmx_universe::DmxUniverse, neewer_universe::NeewerUniverse, universe::Universe};
@@ -163,7 +163,7 @@ impl UniverseManager {
     }
 
     pub fn update_group_attribute(&self, group_name: &str, attribute: &str, value: f32) -> std::io::Result<()> {
-        info!("Updating attribute '{}' for group '{}' to: {:?}", attribute, group_name, value);
+        debug!("Updating attribute '{}' for group '{}' to: {:?}", attribute, group_name, value);
 
         // Look for the specific group, then attribute channel
         if let Some(group_channels) = self.attribute_channels.get(group_name) {
@@ -174,7 +174,7 @@ impl UniverseManager {
                         updated_count += 1;
                     }
                 }
-                info!(
+                debug!(
                     "Attribute update sent to {} fixtures in group '{}', attribute '{}'",
                     updated_count, group_name, attribute
                 );
