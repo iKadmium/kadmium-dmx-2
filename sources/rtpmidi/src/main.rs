@@ -8,7 +8,7 @@ use rumqttc::{AsyncClient, Event, Packet, QoS};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, trace, warn};
+use tracing::{error, info, trace, warn};
 
 #[tokio::main]
 async fn main() {
@@ -50,17 +50,25 @@ async fn main() {
 
     // Main loop with connection handling
     loop {
-        match run_mqtt_client(midi_map.clone(), mqtt_client_for_midi.clone()).await {
-            Ok(()) => {
-                info!("MQTT client exited normally");
-                break;
+        tokio::select! {
+            result = run_mqtt_client(midi_map.clone(), mqtt_client_for_midi.clone()) => {
+                match result {
+                    Ok(()) => {
+                        info!("MQTT client exited normally");
+                        break;
+                    }
+                    Err(e) => {
+                        error!("MQTT connection error: {e}");
+                        // Clear the MQTT client so MIDI messages aren't processed during downtime
+                        *mqtt_client_for_midi.write().await = None;
+                        warn!("Reconnecting in 5 seconds...");
+                        tokio::time::sleep(Duration::from_secs(5)).await;
+                    }
+                }
             }
-            Err(e) => {
-                error!("MQTT connection error: {e}");
-                // Clear the MQTT client so MIDI messages aren't processed during downtime
-                *mqtt_client_for_midi.write().await = None;
-                warn!("Reconnecting in 5 seconds...");
-                tokio::time::sleep(Duration::from_secs(5)).await;
+            _ = tokio::signal::ctrl_c() => {
+                info!("Received Ctrl+C, shutting down gracefully");
+                break;
             }
         }
     }
@@ -84,36 +92,28 @@ async fn run_mqtt_client(
     // Store the MQTT client so the MIDI listener can use it
     *mqtt_client_for_midi.write().await = Some(mqtt_client.clone());
 
-    // Handle MQTT events and Ctrl+C signal
+    // Handle MQTT events
     loop {
-        tokio::select! {
-            event_result = eventloop.poll() => {
-                match event_result {
-                    Ok(Event::Incoming(Packet::Publish(publish))) => {
-                        if publish.topic == "config/midi_map" {
-                            if let Ok(json_str) = std::str::from_utf8(&publish.payload) {
-                                match serde_json::from_str::<MidiMap>(json_str) {
-                                    Ok(new_midi_map) => {
-                                        let mut map = midi_map.write().await;
-                                        *map = new_midi_map;
-                                        info!("Updated MIDI map from MQTT");
-                                    }
-                                    Err(e) => {
-                                        error!("Failed to deserialize MIDI map: {e}");
-                                    }
-                                }
+        match eventloop.poll().await {
+            Ok(Event::Incoming(Packet::Publish(publish))) => {
+                if publish.topic == "config/midi_map" {
+                    if let Ok(json_str) = std::str::from_utf8(&publish.payload) {
+                        match serde_json::from_str::<MidiMap>(json_str) {
+                            Ok(new_midi_map) => {
+                                let mut map = midi_map.write().await;
+                                *map = new_midi_map;
+                                info!("Updated MIDI map from MQTT");
+                            }
+                            Err(e) => {
+                                error!("Failed to deserialize MIDI map: {e}");
                             }
                         }
                     }
-                    Ok(_) => {}
-                    Err(e) => {
-                        return Err(Box::new(e));
-                    }
                 }
             }
-            _ = tokio::signal::ctrl_c() => {
-                info!("Received Ctrl+C, shutting down gracefully");
-                return Ok(());
+            Ok(_) => {}
+            Err(e) => {
+                return Err(Box::new(e));
             }
         }
     }

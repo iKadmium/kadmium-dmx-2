@@ -3,7 +3,7 @@ use std::time::Duration;
 use anyhow::Result;
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS};
 use tokio::sync::mpsc;
-use tracing::{error, info, warn};
+use tracing::{error, info, trace, warn};
 
 use kadmium_dmx_shared::{MidiMap, VenueUpdate};
 
@@ -64,7 +64,7 @@ impl MqttManager {
     }
 
     fn handle_mqtt_message(topic: &str, payload: &[u8], sender: &mpsc::UnboundedSender<MqttMessage>) -> Result<()> {
-        info!("Received MQTT message on topic '{}'", topic);
+        trace!("Received MQTT message on topic '{}'", topic);
 
         if topic == "config/venue" {
             let payload_str = std::str::from_utf8(payload)?;

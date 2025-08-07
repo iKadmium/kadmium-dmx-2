@@ -1,0 +1,61 @@
+version: '3.8'
+
+# Note: Since version 1.2.0, podman-compose supports running in a pod.
+# This prevents userns from working correctly.
+# To run without a pod, you can use the --in-pod false option: 
+#   podman compose up --in-pod false
+
+networks:
+  kadmium-network:
+    driver: bridge
+
+services:
+  rtpmidi-source:
+    build:
+      context: .
+      dockerfile: sources/rtpmidi/Dockerfile
+    image: kadmium-dmx-2-rtpmidi-source
+    network_mode: "host"  # Needs host network for mDNS discovery
+    depends_on:
+      - webapi  # Needs MQTT broker from webapi
+    restart: unless-stopped
+
+  processor:
+    build:
+      context: .
+      dockerfile: processor/Dockerfile
+    image: kadmium-dmx-2-processor
+    networks:
+      - kadmium-network
+    environment:
+      - MQTT_HOST=webapi  # Connect to webapi service for MQTT
+    depends_on:
+      - webapi  # Needs MQTT broker from webapi
+    restart: unless-stopped
+
+  webapi:
+    build:
+      context: .
+      dockerfile: webapi/Dockerfile
+    image: kadmium-dmx-2-webapi
+    networks:
+      - kadmium-network
+    ports:
+      - "8080:3000"   # Web API port
+      - "1883:1883"   # MQTT broker port
+    restart: unless-stopped
+
+  neewer-renderer:
+    build:
+      context: .
+      dockerfile: renderer/neewer/Dockerfile
+    image: kadmium-dmx-2-neewer-renderer
+    networks:
+      - kadmium-network
+    environment:
+      - MQTT_HOST=webapi  # Connect to webapi service for MQTT
+    volumes:
+      - /var/run/dbus:/var/run/dbus:ro
+    depends_on:
+      - processor  # Needs processor to be running
+    restart: unless-stopped

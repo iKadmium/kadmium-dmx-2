@@ -8,3 +8,32 @@
 **/package/
 **/.svelte-kit/
 **/htdocs/
+.pnpm-store
+
+# Rust build artifacts
+**/target/
+**/*.rs.bk
+**/Cargo.lock.bk
+
+# Git
+.git/
+.gitignore
+
+# IDE files
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Logs
+*.log
+**/*.log
+
+# Documentation
+**/README.md
+**/docs/

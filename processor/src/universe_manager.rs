@@ -41,7 +41,7 @@ impl UniverseManager {
             for attribute_name in midi_map.attributes.values() {
                 // Initialize with empty vec - will be populated when venues are configured
                 group_channels.insert(attribute_name.clone(), Vec::new());
-                info!("Created channel for group '{}', attribute '{}'", group_name, attribute_name);
+                debug!("Created channel for group '{}', attribute '{}'", group_name, attribute_name);
             }
 
             self.attribute_channels.insert(group_name.clone(), group_channels);
@@ -128,7 +128,7 @@ impl UniverseManager {
                                         // Get a clone of the attribute's sender to add to the group
                                         let sender = attribute.get_sender();
                                         senders.push(sender);
-                                        info!("Added attribute '{}' from fixture '{}' to group '{}'", attribute_name, fixture.name, group_name);
+                                        debug!("Added attribute '{}' from fixture '{}' to group '{}'", attribute_name, fixture.name, group_name);
                                     }
                                 }
                             }
@@ -149,7 +149,7 @@ impl UniverseManager {
                                         // Get a clone of the attribute's sender to add to the group
                                         let sender = attribute.get_sender();
                                         senders.push(sender);
-                                        info!("Added attribute '{}' from fixture '{}' to group '{}'", attribute_name, fixture.name, group_name);
+                                        debug!("Added attribute '{}' from fixture '{}' to group '{}'", attribute_name, fixture.name, group_name);
                                     }
                                 }
                             }
