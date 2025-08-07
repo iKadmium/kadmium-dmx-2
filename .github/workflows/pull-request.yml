@@ -17,24 +17,26 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
       - name: Restore dependencies
-        run: npm ci
+        run: pnpm ci
         working-directory: ${{ matrix.workdir }}
       - name: Test
-        run: npm run test:coverage
+        run: pnpm run test
         working-directory: ${{ matrix.workdir }}
       - name: Build
-        run: npm run build
+        run: pnpm run build
         working-directory: ${{ matrix.workdir }}
       - name: Check coverage
         uses: codecov/codecov-action@v1
-  build-dotnet:
+  build-rust:
     strategy:
       matrix:
         include:
           - project: RtpMidiSource
-            workdir: sources/RtpMidi
-          - project: sAcnRenderer
-            workdir: renderer/sAcn
+            workdir: sources/rtpmidi
+          # - project: sAcnRenderer
+          #   workdir: renderer/sAcn
+          - project: NeewerRenderer
+            workdir: renderer/neewer
           - project: Processor
             workdir: processor
           - project: WebAPI
@@ -42,18 +44,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+      - name: Setup Rust
+        uses: actions/setup-rust@v1
         with:
-          dotnet-version: 6.0.x
-      - name: Restore dependencies
-        run: dotnet restore
-        working-directory: ${{ matrix.workdir }}
+          rust-version: 1.85.0
       - name: Build
-        run: dotnet build --no-restore
+        run: cargo build --release
         working-directory: ${{ matrix.workdir }}
       - name: Test
-        run: dotnet test --no-build --verbosity normal --settings ${GITHUB_WORKSPACE}/coverlet.runsettings
+        run: cargo test
         working-directory: ${{ matrix.workdir }}
       - name: Check coverage
         uses: codecov/codecov-action@v1

@@ -14,11 +14,14 @@ jobs:
       matrix:
         include:
           - project: RtpMidiSource
-            workdir: sources/RtpMidi
+            workdir: sources/rtpmidi
             image-name: source-rtp-midi
-          - project: sAcnRenderer
-            workdir: renderer/sAcn
-            image-name: renderer-sacn
+          # - project: sAcnRenderer
+          #   workdir: renderer/sAcn
+          #   image-name: renderer-sacn
+          - project: NeewerRenderer
+            workdir: renderer/neewer
+            image-name: renderer-neewer
           - project: Processor
             workdir: processor
             image-name: processor
