@@ -1,0 +1,23 @@
+# Kadmium DMX system service - manages all DMX-related containers
+# Starts: webapi (MQTT broker + web API), processor, rtpmidi-source, neewer-renderer
+
+# To install, save this file as /etc/systemd/system/kadmium-dmx.service
+# Then run:
+# sudo systemctl enable kadmium-dmx.service
+
+[Unit]
+Description=Kadmium DMX Services
+After=network.target  # Wait for network to be available
+
+[Service]
+Type=oneshot          # Run command once and exit
+RemainAfterExit=yes   # Keep service marked as "active" after command completes
+WorkingDirectory=/home/kadmium/Code/kadmium-dmx-2
+# Start all containers in detached mode, disable pod creation for podman-compose
+ExecStart=/usr/bin/podman-compose --in-pod false up -d
+# Stop all containers when service is stopped
+ExecStop=/usr/bin/podman-compose --in-pod false down
+User=kadmium          # Run as kadmium user (not root)
+
+[Install]
+WantedBy=multi-user.target  # Start during normal system boot
